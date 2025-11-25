@@ -291,3 +291,11 @@ Vi tittar senda på hur vi kan hålla reda på spelets tillstånd (score, antal 
 ## Nästa steg
 
 I nästa steg kan du utforska att lägga till fiender som rör sig runt i spelvärlden och kan skada spelaren vid kollision. Detta kommer att introducera mer komplexa interaktioner och ytterligare game state-hantering, såsom spelarens hälsa och liv.
+
+Byt branch till `05-enemies` och fortsätt till nästa del i guiden!
+
+```bash
+git checkout enemies
+```
+
+Öppna sedan filen [05-enemies.md](05-enemies.md) för att fortsätta!
