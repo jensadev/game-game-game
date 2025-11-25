@@ -128,7 +128,5 @@ Vi har även gett spelaren ett enkelt ansikte med ögon som tittar i rörelserik
 4. Hur fungerar det när vi stoppar spelaren från att gå utanför canvasens gränser?
 5. Vilka Canvas-metoder används för att rita spelarens mun som ett streck?
 
-## Nästa steg
 
-För att lära dig om kollisionsdetektering och hur spelaren kan interagera med andra objekt, byt till `collision` branchen och se [collision.md](collision.md).
 

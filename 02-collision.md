@@ -234,10 +234,10 @@ I den här delen så har vi använt våra klasser för att faktiskt implementera
 
 Med kollisionsdetektering på plats kan vi nu gå vidare till att implementera mer avancerad fysik, som gravitation och hopp. Vi kommer också att titta på hur vi kan hantera olika typer av objekt och deras interaktioner med spelaren.
 
-Byt branch till `physics` och fortsätt till nästa del i guiden!
+Byt branch till `03-physics` och fortsätt till nästa del i guiden!
 
 ```bash
-git checkout physics
+git checkout 03-physics
 ```
 
-Öppna sedan filen [physics.md](physics.md) för att fortsätta!
+Öppna sedan filen [03-physics.md](03-physics.md) för att fortsätta!
