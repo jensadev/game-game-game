@@ -87,6 +87,8 @@ Vi iterar genom objekten i Game.js och kallar på deras respektive kollisionshan
 
 ### Player.handlePlatformCollision()
 
+Den här koden är nu flyttad från Game.js till Player-klassen.
+
 ```javascript
 handlePlatformCollision(platform) {
     const collision = this.getCollisionData(platform)
@@ -109,6 +111,8 @@ handlePlatformCollision(platform) {
 ```
 
 ### Enemy.handlePlatformCollision()
+
+Precis som för spelaren så flyttar vi kollisionen med plattformar till fienden. Koden i sig är på det stora hela identisk koden för spelaren. Utifrån det kan vi senare göra en avvägning om vi vill konsolidera denna kod i en gemensam plats (t.ex. GameObject) eller behålla den duplicerad för tydlighetens skull.
 
 ```javascript
 handlePlatformCollision(platform) {
@@ -182,9 +186,9 @@ this.invulnerableTimer = 0
 this.invulnerableDuration = 1000 // 1 sekund
 ```
 
-### takeDamage() metod
+### Player.takeDamage() metod
 
-När spelaren krockar med en fiende anropar vi `takeDamage()`. Metoden ansvarar för att minska health, sätta invulnerability och markera spelaren för borttagning om health når 0.
+När spelaren krockar med en fiende anropar vi `takeDamage(amount)`. Metoden ansvarar för att minska health, sätta invulnerability och markera spelaren för borttagning om health når 0. Vi kan styra hur mycket skada spelaren tar genom att skicka in ett värde som parameter, det låter oss skapa fiender med olika skadenivåer i framtiden.
 
 ```javascript
 takeDamage(amount) {
@@ -244,9 +248,9 @@ draw(ctx) {
 - `% 2` ger 0 eller 1 (jämnt eller udda)
 - På jämna frames skippar vi rendering = blink
 
-## 5. Kollisioner i Game.js - Simplified
+## Refaktoriserad kollisionshantering i Game.js
 
-Game.js organiserar kollisionskontroller och låter objekten hantera sin respons:
+Game.js organiserar nu kollisionskontrollerna men varje objekt hanterar sin repons, det vill säga att vi har flyttat koden för plattformskollisioner till Player och Enemy klasserna. Förhoppningsvis ser du nyttan av det här direkt när du jämför koden i Game.js före och efter refaktoriseringen.
 
 ```javascript
 // Spelarkollisioner med plattformar
@@ -295,16 +299,18 @@ this.enemies.forEach(enemy => {
 - Lätt att lägga till nya objekttyper
 - Följer separation of concerns
 
-## 6. UI för Health
+## Berätta för spelaren hur mycket health den har kvar
 
-Vi uppdaterar `UserInterface` för att visa health:
+Det är viktigt att spelaren vet hur mycket health den har kvar. Vi kan visa detta i UI genom att rita text och hjärtan som representerar health. I det här fallet gör vi båda, men det är valfritt.
+
+Vi använder oss av en loop så att om vi ändrar `maxHealth` så anpassas UI automatiskt.
 
 ```javascript
 // Rita health text
 const healthText = `Health: ${this.game.player.health}/${this.game.player.maxHealth}`
 ctx.fillText(healthText, 20, 100)
 
-// Rita health bars som hjärtan
+// Rita hälso-fyrkanter
 for (let i = 0; i < this.game.player.maxHealth; i++) {
     const heartX = 20 + i * 30
     const heartY = 110
@@ -319,26 +325,6 @@ for (let i = 0; i < this.game.player.maxHealth; i++) {
 }
 ```
 
-**Visuell representation:**
-- Text visar exakt värde (3/3)
-- Hjärtan ger snabb visuell feedback
-- Röda = health kvar, grå = förlorad health
-
-## 7. Game Over State
-
-När `health <= 0` markeras spelaren för borttagning:
-
-```javascript
-if (this.health <= 0) {
-    this.markedForDeletion = true
-}
-```
-
-**För senare implementation:**
-- Detektera när spelaren är borttagen
-- Visa "Game Over" skärm
-- Reset/Restart funktionalitet
-
 ## Testa spelet
 
 Nu kan du:
@@ -347,54 +333,28 @@ erar på plattformar
 2. **Ta skada** - Spelaren blinkar och förlorar health
 3. **Se health** - UI visar health som text och hjärtan
 4. **Invulnerability** - Du kan inte ta skada direkt efter en hit
-5. **Dö** - När health når 0 försvinner spelaren
 
-## Förbättringar och utvidgningar
+## Uppgifter
 
-### 1. Olika fiendetyper
+### En räserfiende
 
-```javascript
-class FastEnemy extends Enemy {
-    constructor(game, x, y) {
-        super(game, x, y, 30, 30)
-        this.speed = 0.2 // Snabbare
-        this.damage = 1
-        this.color = '#FF6666'
-    }
-}
+Testa nu att skapa olika typer av fiender, det kan vara en snabbare fiende som gör mindre skada, eller en starkare fiende som gör mer skada.
+Du har kontroll över dessa egenskaper via `speed` och `damage` properties i Enemy-klassen.
 
-class StrongEnemy extends Enemy {
-    constructor(game, x, y) {
-        super(game, x, y, 60, 60)
-        this.speed = 0.05 // Långsammare
-        this.damage = 2 // Mer skada
-        this.color = '#CC0000'
-    }
-}
-```
+### Hälsa och power-ups
 
-### 2. Health pickups
+Lägg till en power-up som återställer spelarens health när den plockas upp. Du kan skapa en ny klass `HealthPack` som ärver från `GameObject` och när spelaren krockar med den så ökar du spelarens health.
+Du kan begränsa health till maxHealth så att den inte ökar för mycket.
 
-```javascript
-class HealthPickup extends GameObject {
-    constructor(game, x, y) {
-        super(game, x, y, 20, 20)
-        this.healAmount = 1
-        this.color = '#00FF00'
-    }
-}
+Du kan också prova att göra en power-up som ger spelaren temporär ökad speed eller minskad skada från fiender. Du får då utgå från koden där vi skapade en timer för invulnerability. Hur kan du använda samma mönster för att skapa en temporär buff?
 
-// I Game.js
-if (this.player.intersects(healthPickup)) {
-    this.player.health = Math.min(
-        this.player.health + healthPickup.healAmount,
-        this.player.maxHealth
-    )
-    healthPickup.markedForDeletion = true
-}
-```
+#### En health-bar
 
-### 3. Olika AI-beteenden
+Om du vill så kan du testa att skapa en health-bar istället för hjärtan. En health-bar är en rektangel som fylls upp baserat på spelarens health. Du kan rita en rektangel med bredd baserad på `(player.health / player.maxHealth) * this.totalBarWidth`.
+
+### Jakten på spelaren
+
+Du kanske vill prova att skapa en fiende som jagar spelaren istället för att patrullera. Här är ett enkelt exempel på hur du kan implementera detta i `update()` metoden för en ny fiendetyp:
 
 ```javascript
 // Följe AI - jagar spelaren
@@ -405,14 +365,11 @@ update(deltaTime) {
         this.x += this.speed * deltaTime
     }
 }
-
-// Jump AI - hoppar periodiskt
-if (this.isGrounded && Math.random() < 0.01) {
-    this.velocityY = -0.5
-}
 ```
 
-### 4. Knockback effekt
+### Krocka med känsla
+
+Ett sätt att få interaktionen att kännas bättre är att lägga till knockback när spelaren tar skada. Detta kan göras genom att justera spelarens velocity när `takeDamage()` anropas.
 
 ```javascript
 takeDamage(amount, knockbackX = 0) {
@@ -428,7 +385,11 @@ takeDamage(amount, knockbackX = 0) {
 }
 ```
 
-### 5. Fiender med health
+### En fiende med massor av hälsa
+
+Det här kräver att vi lägger till en `health` property i Enemy-klassen och en `takeDamage()` metod som minskar fiendens health när den träffas av spelaren (t.ex. via ett projektil). När health når 0 så markeras fienden för borttagning.
+
+Du kan börja med implementeringen genom att göra så att fienden tar skada precis som spelaren gör när de krockar.
 
 ```javascript
 // I Enemy.js
@@ -443,90 +404,22 @@ takeDamage(amount) {
 }
 ```
 
-## Designmönster
+### Hoppa på fiender
 
-### 1. markedForDeletion för Game Over
+Vi har i systemet redan metoden för att kontrollera från vilket håll spelaren krockar med fienden. Använd detta för att implementera att spelaren kan hoppa på fiender för att skada dem istället för att ta skada själv.
 
-Använder samma mönster för spelarens död:
-```javascript
-// Player tar dödlig skada
-this.markedForDeletion = true
+Du får då använda `getCollisionData()` för att avgöra om spelaren krockar med fienden från toppen. Om så är fallet så anropar du fiendens `takeDamage()` metod och studsar spelaren uppåt.
 
-// Game upptäcker detta (senare implementation)
-if (this.player.markedForDeletion) {
-    this.gameOver = true
-}
-```
+## Sammanfattning
 
-### 2. Timer Pattern
+I detta steg har vi lagt till fiender med enkel patrullerande AI och ett health-system för spelaren. Vi har också implementerat invulnerability efter att ha tagit skada för att förbättra spelupplevelsen. Kollisioner hanteras nu av respektive objekt, vilket gör koden mer organiserad och lättare att underhålla. Slutligen har vi lagt till visuell feedback för spelarens health i UI.
 
-Invulnerability timer är ett vanligt mönster:
-```javascript
-// Sätt timer
-this.timer = this.duration
-
-// Räkna ner
-this.timer -= deltaTime
-
-// Kolla om klar
-if (this.timer <= 0) {
-    // Timer klar
-}
-```
-
-Användbart för:
-- Cooldowns
-- Buff/debuff duration
-- Animations
-- Delayed events
-
-### 3. Separation of Concerns - Refactored
-
-**Enemy äger:**
-- Sin AI och rörelse
-- Sitt damage-värde
-- Sin rendering
-- Sin kollisionsrespons (handlePlatformCollision, handleEnemyCollision, handleScreenBounds)
-
-**Player äger:**
-- Sin health
-- Invulnerability state
-- Hur skada tas emot
-- Sin kollisionsrespons (handlePlatformCollision)
-
-**Game ansvarar för:**
-- Organisera kollisionskontroller (vilka objekt ska kolla mot varandra)
-- Kalla på `takeDamage()` när spelaren träffar fiende
-- Cleanup av borttagna objekt
-
-Detta gör det enkelt att ändra eller utöka varje del oberoende. Om vi vill ändra hur en fiende reagerar på kollisioner behöver vi bara ändra i Enemy-klassen.
-
-## Nästa steg
-
-Med enemies på plats kan vi nu lägga till:
-- **Projectiles** - Spelaren kan skjuta på fiender
-- **Enemy health** - Fiender kan dö
-- **Spawn system** - Fiender spawnar över tid
-- **Score för döda fiender** - Poäng när fiender dör
 
 ## Testfrågor
 
-1. **Varför använder Enemy `markedForDeletion` även om vi inte dödar fiender än? Hur förbereder detta för framtida funktionalitet?**
-
-2. **Förklara hur patrol AI fungerar. Vad händer när fienden når `endX` eller `startX`?**
-
-3. **Varför behöver vi `invulnerable` flaggan? Vad skulle hända utan den?**
-
-4. **Hur fungerar blink-effekten matematiskt? Förklara `Math.floor(this.invulnerableTimer / blinkSpeed) % 2`.**
-
-5. **Varför äger Enemy sitt eget `damage`-värde istället för att ha det i Game? (Separation of concerns)**
-
-6. **Vad händer om `health` blir negativ? Varför kontrollerar vi `if (this.health < 0) this.health = 0`?**
-
-7. **Förklara skillnaden mellan hur vi använder `intersects()` för coins vs enemies. Varför samma metod men olika beteende?**
-
-8. **I takeDamage(), varför sätter vi `markedForDeletion = true` istället för att direkt ta bort spelaren från spelet?**
-
-9. **Hur skulle du implementera knockback när spelaren tar skada? Vilka properties behöver ändras?**
-
-10. **Beskriv flödet från att spelaren kolliderar med en fiende till att spelaren blinkar. Vilka metoder anropas i vilken ordning?**
+1. Varför använder Enemy `markedForDeletion` även om vi inte dödar fiender än? Hur förbereder detta för framtida funktionalitet?
+2. Förklara hur patrol AI fungerar. Vad händer när fienden når `endX` eller `startX`?
+3. Varför behöver vi `invulnerable` flaggan? Vad skulle hända utan den?
+4. Varför äger Enemy sitt eget `damage`-värde istället för att ha det i Game? (Separation of concerns)
+5. Förklara skillnaden mellan hur vi använder `intersects()` för coins vs enemies. Varför samma metod men olika beteende?
+6. Beskriv flödet från att spelaren kolliderar med en fiende till att spelaren blinkar. Vilka metoder anropas i vilken ordning?

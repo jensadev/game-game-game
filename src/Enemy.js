@@ -3,7 +3,7 @@ import GameObject from './GameObject.js'
 export default class Enemy extends GameObject {
     constructor(game, x, y, width, height, patrolDistance = null) {
         super(game, x, y, width, height)
-        this.color = '#FF4444' // Röd
+        this.color = 'red' // Röd
         
         // Fysik
         this.velocityX = 0
