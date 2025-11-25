@@ -20,4 +20,26 @@ export default class GameObject {
                this.y < other.y + other.height &&
                this.y + this.height > other.y
     }
+
+    // Returnerar kollisionsdata med riktning
+    getCollisionData(other) {
+        if (!this.intersects(other)) return null
+        
+        // Beräkna överlappning från varje riktning
+        const overlapLeft = (this.x + this.width) - other.x
+        const overlapRight = (other.x + other.width) - this.x
+        const overlapTop = (this.y + this.height) - other.y
+        const overlapBottom = (other.y + other.height) - this.y
+        
+        // Hitta minsta överlappningen för att bestämma riktning
+        const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom)
+        
+        // Bestäm riktning baserat på minsta överlappningen
+        if (minOverlap === overlapTop) return { direction: 'top' }
+        if (minOverlap === overlapBottom) return { direction: 'bottom' }
+        if (minOverlap === overlapLeft) return { direction: 'left' }
+        if (minOverlap === overlapRight) return { direction: 'right' }
+        
+        return null
+    }
 }

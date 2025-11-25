@@ -10,24 +10,17 @@ export default class Player extends GameObject {
         this.velocityY = 0
 
         // Rörelsehastighet (hur snabbt spelaren accelererar/rör sig)
-        this.moveSpeed = 0.5
+        this.moveSpeed = 0.3
         this.directionX = 0
         this.directionY = 0
+
+        // Fysik egenskaper
+        this.jumpPower = -0.6 // negativ hastighet för att hoppa uppåt
+        this.isGrounded = false // om spelaren står på marken
     }
 
     update(deltaTime) {
-        // Styr spelaren med piltangenterna
-        if (this.game.inputHandler.keys.has('ArrowUp')) {
-            this.velocityY = -this.moveSpeed
-            this.directionY = -1
-        } else if (this.game.inputHandler.keys.has('ArrowDown')) {
-            this.velocityY = this.moveSpeed
-            this.directionY = 1
-        } else {
-            this.velocityY = 0
-            this.directionY = 0
-        }
-
+        // Horisontell rörelse
         if (this.game.inputHandler.keys.has('ArrowLeft')) {
             this.velocityX = -this.moveSpeed
             this.directionX = -1
@@ -37,6 +30,30 @@ export default class Player extends GameObject {
         } else {
             this.velocityX = 0
             this.directionX = 0
+        }
+
+        // Hopp - endast om spelaren är på marken
+        if (this.game.inputHandler.keys.has(' ') && this.isGrounded) {
+            this.velocityY = this.jumpPower
+            this.isGrounded = false
+        }
+
+        // Applicera gravitation
+        this.velocityY += this.game.gravity * deltaTime
+        
+        // Applicera luftmotstånd (friktion)
+        if (this.velocityY > 0) {
+            this.velocityY -= this.game.friction * deltaTime
+            if (this.velocityY < 0) this.velocityY = 0
+        }
+
+        // Sätt directionY baserat på vertikal hastighet för ögonrörelse
+        if (this.velocityY < -0.1) {
+            this.directionY = -1 // tittar upp när man hoppar
+        } else if (this.velocityY > 0.1) {
+            this.directionY = 1 // tittar ner när man faller
+        } else {
+            this.directionY = 0
         }
 
         // Uppdatera position baserat på hastighet
