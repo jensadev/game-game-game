@@ -1,21 +1,62 @@
-# Collectibles - Mynt och Score system
+# Steg 4 - Collectibles - Mynt och Score system
 
 I detta steg lägger vi till samlarbara objekt (mynt) och ett score-system med UI. Detta ger spelet en gameplay-loop där spelaren har ett mål: samla så många mynt som möjligt.
+
+## Vad lär vi oss?
+
+I detta steg fokuserar vi på:
+- **markedForDeletion pattern** - Ett säkert ta bort objekt under iteration.
+- **State management** - Hålla reda på spelets tillstånd (score, coins).
+- **UI as presentation layer** - Separation mellan data och visning. Att förstå att det användaren ser är en presentation av spelets tillstånd. Variablerna håller värden i sig, men vi måste rita dem på skärmen för att spelaren ska se dem.
+- **DRY-principen** - Do not repeat yourself. Återanvändbart borttagnings-mönster i GameObject.
+- **Vem äger vad, eller är ansvarig för** - Coin äger sitt value, Game äger totalen.
+
+### Varför är detta viktigt?
+
+Detta steg introducerar **gameplay-loop**:
+1. Spelaren rör sig runt
+2. Plockar upp mynt
+3. Får poäng
+4. Ser feedback (UI uppdateras)
+5. Känner progression!
+
+Utan mål och feedback är ett spel bara en sandlåda. Collectibles skapar **motivation** och **progression**.
 
 ## Översikt
 
 För att skapa ett collectibles-system behöver vi:
-1. **markedForDeletion i GameObject** - Ett gemensamt sätt att markera objekt för borttagning.
-2. **Coin-klass** - Objekt som spelaren kan plocka upp.
-3. **Game State** - Hålla reda på score och antal mynt samlade.
-4. **UI-klass** - Visa score och statistik på skärmen.
-5. **Pickup-logik** - Detektera när spelaren plockar upp mynt.
+1. **markedForDeletion i GameObject** - Ett gemensamt sätt att markera objekt för borttagning
+2. **Coin-klass** - Objekt som spelaren kan plocka upp
+3. **Game State** - Hålla reda på score och antal mynt samlade
+4. **UI-klass** - Visa score och statistik på skärmen
+5. **Pickup-logik** - Detektera när spelaren plockar upp mynt
 
-## markedForDeletion i GameObject
+## markedForDeletion - Ett designmönster
 
-När en spelare har plockat upp ett mynt vill vi ta bort det från spelet. Istället för att direkt ta bort objektet från arrayen (vilket kan orsaka problem under iteration) använder vi ett mönster där vi markerar objekt för borttagning med en flagga `markedForDeletion`. Sedan, efter alla uppdateringar, filtrerar vi bort dessa objekt från arrayen.
+När en spelare plockar upp ett mynt vill vi ta bort det från spelet. Men att **direkt ta bort objekt från en array under iteration är farligt**!
 
-Det här är ytterligare en sak där vi flyttar denna logik från att skriva den individuellt i till exempel `Coin` klassen till att vara en del av bas `GameObject` klassen. Det kommer vara användbart för många olika typer av objekt i spelet som kan behöva tas bort (fiender, projektiler, partiklar, etc).
+### Problemet med direkt borttagning:
+
+```javascript
+// FARLIGT! ❌
+this.coins.forEach((coin, index) => {
+    if (this.player.intersects(coin)) {
+        this.coins.splice(index, 1) // Modifierar arrayen under iteration!
+    }
+})
+```
+
+**Vad går fel?**
+- När vi tar bort element ändras index för alla efterföljande element
+- forEach fortsätter med gamla index-värden
+- Vissa objekt kan "hoppas över" eller kontrolleras två gånger
+- Bugs som är svåra att reproducera!
+
+### Lösningen: markedForDeletion pattern
+
+Vi använder ett **tvåstegs-mönster**:
+1. **Markera** objekt för borttagning under iteration
+2. **Ta bort** alla markerade objekt efter iteration
 
 ```javascript
 export default class GameObject {
@@ -26,34 +67,44 @@ export default class GameObject {
 }
 ```
 
-Om vi ska tittar på fördelar med att göra detta i ett objektorienterat perspektiv:
+**Varför i GameObject?**
+- **DRY-principen**: Alla GameObjects kan använda samma pattern.
+- **Återanvändbart**: Fungerar för coins, enemies, projectiles, particles, etc.
+- **Ingen duplicerad kod**: Behöver inte implementeras i varje subklass.
+- **Välkänt mönster**: Används i de flesta spelmotorer.
 
-**Återanvändbart mönster:**
-- Alla GameObjects kan markeras för borttagning
-- Fungerar för coins, enemies, projectiles, particles, etc.
-- Ingen klass-specifik logik behövs
+### Hur det fungerar:
 
-**Separation of concerns:**
-- Markering och faktisk borttagning är separerade
-- Objekt kan markeras när som helst under update-cykeln
-- Cleanup sker på ett ställe efter alla uppdateringar
+**Steg 1 - Markera:**
+```javascript
+// Under update-cykeln
+if (this.player.intersects(coin)) {
+    coin.markedForDeletion = true // Säkert att markera under iteration
+}
+```
 
-Detta kan förklaras som "vem äger vad" eller "vem är ansvarig för vad":
+**Steg 2 - Ta bort:**
+```javascript
+// Efter alla uppdateringar
+this.coins = this.coins.filter(coin => !coin.markedForDeletion)
+```
+
+**Vem äger vad:**
 - **GameObject/Coin ansvarar för:** Att veta om den ska tas bort (`markedForDeletion = true`)
 - **Game ansvarar för:** Att faktiskt ta bort objekt från arrayen (`filter`)
 - Varje klass har sitt ansvarsområde och blandar inte ihop logik
 
-**Säkert:**
-- Ingen modifiering av arrays under iteration
-- Undviker index-problem
+**Fördelar:**
+- **Säkert**: Ingen modifiering av arrays under iteration.
+- **Förutsägbart**: Alla objekt kontrolleras en gång per frame.
+- **Flexibelt**: Objekt kan markeras när som helst under update-cykeln.
+- **Tydligt**: Cleanup sker på ett ställe efter alla uppdateringar.
 
-**Välkänt mönster:**
-- Används i de flesta spelmotorer
-- Skalbart för större projekt
+**Reflektion:** Detta är ett exempel på hur vi löser vanliga problem i spelutveckling med etablerade designmönster!
 
-## Saker att plocka upp i spelet Coin-klassen
+## Coin-klassen - Game juice!
 
-För att kunna representera digitala rikedomar i spelet skapar vi en `Coin` klass som ärver från `GameObject`:
+För att representera samlarbara mynt skapar vi en `Coin` klass med en enkel men effektiv animation:
 
 ```javascript
 export default class Coin extends GameObject {
@@ -86,21 +137,60 @@ export default class Coin extends GameObject {
 }
 ```
 
-Om du tidigare skapade en klass för att rita ut cirklar så ser du nog att det finns många likheter här. En sak jag ville ta med och illustrera här är hur vi kan röra på "statiska" objekt med en mindre animation (studsa upp och ner) för att ge spelet mer liv (eller juice).
+### Vem äger vad - Coin äger sitt värde
 
-### Hur fungerar animationen?
+**Viktigt designbeslut:** `value` är en property i `Coin`, inte i `Game`! 
 
-Vi använder den inbyggda funktionen `Math.sin()` för att ge ett värde som varierar mellan -1 och 1. Vi kan sedan multiplicera detta värde med en distans (`bobDistance`) för att få en smidig upp-och-ner rörelse. Vi använder även `bobSpeed` för att styra hur snabbt gungningen sker, och `deltaTime` för att säkerställa att animationen är jämn oavsett framerate.
+```javascript
+this.value = value // Myntet vet sitt eget värde
+```
+
+**Varför?**
+- **Inkapsling**: Myntet äger sin egen data.
+- **Flexibilitet**: Olika mynt kan ha olika värden.
+- **Separation**: Game behöver inte veta om varje mynts värde i förväg.
+
+**Exempel:**
+```javascript
+new Coin(this, 200, 100, 20, 10)  // Vanligt mynt, 10 poäng
+new Coin(this, 300, 150, 30, 50)  // Stort mynt, 50 poäng
+new Coin(this, 400, 200, 15, 5)   // Litet mynt, 5 poäng
+```
+
+Game frågar bara myntet om dess värde när det plockas upp: `coin.value` och använder det för att uppdatera score.
+
+### Game juice - Bob animation
+
+"Game juice" = små detaljer som gör spelet kännas levande! Om du inte sett eller minns så rekommenderas följande video: [Juice it or lose it](https://www.youtube.com/watch?v=Fy0aCDmgnxg).
+
+**Hur bob-animationen fungerar:**
 
 ```javascript
 this.bobOffset += this.bobSpeed * deltaTime  // Ökar kontinuerligt
 const bobY = Math.sin(this.bobOffset) * this.bobDistance
 ```
 
-## Game State
+**Matematiken:**
+- `Math.sin()` ger värde mellan -1 och 1
+- Multiplicerat med `bobDistance` (5 pixels) = rör sig 5 pixels upp/ner
+- `bobSpeed` styr hur snabbt gungningen sker
+- `deltaTime` gör animationen framerate-oberoende
 
-Med game state så menas de variabler och egenskaper som håller reda på spelets nuvarande status, som poäng, antal samlade mynt, hälsa, etc. Detta är viktigt för att kunna ge feedback till spelaren och skapa mål.
-Vi väljer att spara dessa i `Game.js` för att ha en central plats för spelets tillstånd. Om spelet blir väldigt stort och komplext kan vi senare överväga att flytta detta till en dedikerad state management-klass.
+**Resultat:** Myntet "svävar" mjukt upp och ner → känns mer levande än statiska objekt!
+
+**Game juice exempel:**
+- Bob animation på mynt.
+- Partikel-effekter när mynt plockas upp.
+- Ljud-effekter för pickup.
+- Screen shake när spelaren tar skada.
+
+Små detaljer = stor skillnad i spelkänsla!
+
+## Game State - Hålla reda på progression
+
+**State management** = Hålla reda på spelets nuvarande status.
+
+Vi sparar state i `Game.js` för att ha en central plats:
 
 ```javascript
 // Game state
@@ -108,15 +198,32 @@ this.score = 0
 this.coinsCollected = 0
 ```
 
-Detta är grunden för mer avancerad state management senare. Just nu är det enkelt:
-- `score` - Total poäng
-- `coinsCollected` - Antal mynt samlade
+**Varför i Game?**
+- **Centraliserat**: Ett ställe för all spelstatus.
+- **Lätt att läsa**: UI kan hämta från `this.game.score`.
+- **Lätt att spara**: Senare kan vi spara `this.score` till localStorage.
+- **Lätt att debugga**: `console.log(this.game)` visar allt.
 
-Notera att varje mynts värde (`value`) ägs av `Coin` klassen själv, inte av `Game`. Detta följer separation of concerns - myntet vet sitt eget värde. Vi kan sätta detta värde i konstruktorn när vi skapar mynt, men det är inget krav då vi har ett standardvärde.
+### Vem äger vad - Separation of data
 
-## Gränssnittsklass för UI
+**Viktigt:**
+- **Coin äger:** `value` (hur mycket myntet är värt)
+- **Game äger:** `score` (totala poängen) och `coinsCollected` (antal samlade)
 
-För att användaren ska kunna se sin score och antal samlade mynt skapar vi en dedikerad `UI` klass för att rita game state på skärmen. Det ger oss en central punkt att utgå ifrån när vi vill lägga till mer UI-element i framtiden (hälsa, power-ups, etc).
+```javascript
+// När mynt plockas upp:
+this.score += coin.value  // Game frågar myntet om dess värde
+this.coinsCollected++     // Game håller räkningen
+```
+
+**Varför denna separation?**
+- Myntet vet sitt eget värde (inkapsling).
+- Game behöver inte hålla en lista över alla möjliga mynt-värden.
+- Flexibelt: olika mynt kan ha olika värden.
+
+## UI - Presentation Layer
+
+För att visa score och mynt på skärmen skapar vi en dedikerad `UserInterface` klass. Det ger oss en sammanhängande plats för all UI-relaterad rendering.
 
 ```javascript
 export default class UserInterface {
@@ -152,18 +259,58 @@ export default class UserInterface {
 }
 ```
 
-Här skapar vi några konfigurationsparameterar för font och färg. I det här fallet så hårdkodar vi värdena i konstruktorn och sätter dem inte från `Game.js` när vi skapar UI-objektet.
-Sedan använder vi `draw()` metoden för att rita score och antal mynt på skärmen med canvas `fillText()` funktion.
+### Model-View Separation (MV-pattern)
+
+**UI är "View" - presentationslagret:**
+- **Model** (Game state): `this.game.score`, `this.game.coinsCollected`
+- **View** (UI): Läser från model och ritar på skärmen
+
+**Separation:**
+```javascript
+// Game äger DATA
+this.score = 100
+
+// UI läser DATA och visar den
+const scoreText = `Score: ${this.game.score}`
+ctx.fillText(scoreText, 20, 40)
+```
+**Varför separera?**
+- **Testbarhet**: Kan testa game state utan UI.
+- **Flexibilitet**: Kan byta UI-stil utan att ändra game logic.
+- **Återanvändbarhet**: Samma UI-klass för olika spel.
+- **Klarhet**: Presentation och logik blandar inte ihop sig.
 
 ### Varför en separat UI-klass?
 
-- **Separation of concerns** - UI-logik separerad från game-logik
-- **Återanvändbart** - Lätt att utöka med mer UI-element
-- **Lättare att styla** - All text-styling på ett ställe
+**Istället för att rita text direkt i Game.draw():**
+```javascript
+// ❌ Blandar logik och presentation
+draw(ctx) {
+    ctx.fillText(`Score: ${this.score}`, 20, 40)
+    // ... massa mer UI-kod i Game
+}
+```
+
+**Vi separerar:**
+```javascript
+// ✅ Tydlig separation
+class Game {
+    draw(ctx) {
+        this.ui.draw(ctx)  // UI ansvarar för sin egen rendering
+    }
+}
+```
+
+**Fördelar:**
+- All UI-styling på ett ställe
+- Lätt att lägga till nya UI-element
+- Game-klassen blir inte bloated med UI-kod
+
+**Reflektion:** När UI växer (health bars, minimaps, menus) är denna separation väldigt tacksam!
 
 ## Make it rain! Skapa mynt i nivån
 
-I `Game.js` konstruktor skapar vi en array med mynt.
+I `Game.js` konstruktor skapar vi en array med mynt. I nuläget så har vårt spel bara en "nivå", så vi hårdkodar detta.
 
 ```javascript
 this.coins = [
@@ -174,14 +321,16 @@ this.coins = [
 ]
 ```
 
-Mynten placeras strategiskt:
+Mynten placeras strategiskt för att skapa utmaning och intresse:
 - Vid plattformar
 - Mellan plattformar (kräver hopp)
 - Olika höjder för variation
 
-## Plocka upp mynt
+## Plocka upp mynt - Två-stegsprocessen
 
-För att kunna plocka upp mynten så behöver vi titta på kollision mellan spelaren och mynten i `Game.js` `update()` metoden. Vi gör detta i två steg. I det första steget så kontrollerar vi kollision och markerar mynt för borttagning, i nästa steg tar vi bort de markerade mynten.
+För att plocka upp mynt använder vi **markedForDeletion pattern** i två steg:
+
+### Steg 1 - Markera mynt vid kollision
 
 ```javascript
 // Kontrollera kollision med mynt
@@ -195,31 +344,74 @@ this.coins.forEach(coin => {
 })
 ```
 
-När vi väl har markerat mynt för borttagning så tar vi bort dem i ett separat steg.
+**Varför `!coin.markedForDeletion`?**
+Utan denna check skulle spelaren kunna få poäng flera gånger för samma mynt! 
+
+**Scenario utan check:**
+```
+Frame 1: Kollision → score += 10, markedForDeletion = true
+Frame 2: Mynt finns kvar i arrayen, kollision finns kvar → score += 10 igen!
+Frame 3: Mynt tas bort
+```
+
+Med check:
+```
+Frame 1: Kollision → score += 10, markedForDeletion = true
+Frame 2: markedForDeletion = true → check misslyckas, inget händer 
+Frame 3: Mynt tas bort
+```
+
+### Steg 2 - Ta bort markerade mynt
+
+När ett mynt plockats upp så har du satt `markedForDeletion = true`. Nu behöver vi ta bort dessa mynt från `this.coins` arrayen, vi behöver alltså städa efter oss.
 
 ```javascript
-// Ta bort alla objekt markerade för borttagning
+// Efter alla uppdateringar
 this.coins = this.coins.filter(coin => !coin.markedForDeletion)
 ```
 
-Vad är då `array.filter()`? Det är en inbyggd JavaScript-metod som skapar en ny array med alla element som uppfyller ett visst villkor. I detta fall behåller vi bara de mynt som **inte** är markerade för borttagning.
-Funktionen itererar över varje element i arrayen och inkluderar det i den nya arrayen om villkoret (`!coin.markedForDeletion`) är sant. Det gör att vi inte ändrar den ursprungliga arrayen medan vi itererar över den, vilket undviker potentiella buggar (fundera på vad som händer om vi iterar med index och tar bort element med index platser samtidigt).
+**Array.filter():**
+- Skapar en ny array med endast objekt där villkoret är `true`
+- `!coin.markedForDeletion` = behåll mynt som INTE är markerade
+- Säkert att göra efter iteration
 
-### Varför två steg?
+**Visualisering:**
+```javascript
+// Före filter:
+coins = [coin1, coin2(marked), coin3, coin4(marked)]
 
-**Separation av logik:**
-- Första loopen: Game logic (kollision, score, state changes)
-- Andra steget: Cleanup (array management)
+// Efter filter:
+coins = [coin1, coin3]
+```
 
-**Säkerhet:**
-- Vi modifierar aldrig arrayen medan vi itererar över den
-- Undviker klassiska bugs med index som förskjuts
-- Objekt kan markeras från flera ställen (kollision, timer, off-screen, etc.)
+### Hela flödet i Game.update()
 
-**Flexibilitet:**
-- Ett mynt kan markeras från olika håll (pickup, timeout, special event)
-- Cleanup sker alltid på samma sätt
-- Lätt att lägga till mer cleanup-logik senare
+```javascript
+update(deltaTime) {
+    // 1. Uppdatera alla objekt
+    this.coins.forEach(coin => coin.update(deltaTime))
+    this.player.update(deltaTime)
+    
+    // 2. Kolla kollisioner och MARKERA
+    this.coins.forEach(coin => {
+        if (this.player.intersects(coin) && !coin.markedForDeletion) {
+            this.score += coin.value
+            this.coinsCollected++
+            coin.markedForDeletion = true
+        }
+    })
+    
+    // 3. TA BORT markerade objekt
+    this.coins = this.coins.filter(coin => !coin.markedForDeletion)
+}
+```
+
+**Ordningen är kritisk:**
+1. Update först (animationer, rörelse)
+2. Kollisionskontroll och markering
+3. Cleanup sist
+
+**Reflektion:** Detta pattern kommer användas för enemies, projectiles, particles - alla objekt som tas bort dynamiskt!
 
 ### Varför intersects() och inte getCollisionData()?
 
@@ -245,21 +437,29 @@ draw(ctx) {
 ## Nu är du redo att samla digital rikedomar!
 
 Nu kan du:
-1. **Samla mynt** - Spring/hoppa in i mynt för att plocka upp dem
-2. **Se score öka** - Score visas i övre vänstra hörnet
-3. **Räkna mynt** - Antal samlade mynt visas också
+1. **Samla mynt** - Spring/hoppa in i mynt för att plocka upp dem.
+2. **Se score öka** - Score visas i övre vänstra hörnet.
+3. **Räkna mynt** - Antal samlade mynt visas också.
+
+Vi har alltså skapat ett första steg för att spelets ska ha mål och vara intressant att spela.
 
 ## Uppgifter
 
 ### Silver och guld
 
+**Du lär dig mer om och övar på att skapa klasser och arv.**
+
 Skapa två olika mynttyper med olika värden och färger. Det kan vara guldmynt (värde 50) och silvermynt (värde 10). Du kan antingen sätta olika värden när du skapar mynten i `Game.js`, eller skapa två nya klasser `GoldCoin` och `SilverCoin` som ärver från `Coin` klassen.
 
 ### Skriv ut totalt antal mynt i nivån
 
+**Du övar på att använda spelets state och uppdatera UI.**
+
 Lägg till en egenskap i `Game.js` som håller reda på totalt antal mynt i nivån. Uppdatera UI för att visa detta som `Coins: X/Y` där X är samlade mynt och Y är totalt antal mynt. Det gör målet för gameloopen tydligt för spelaren.
 
 ### Roterande mynt
+
+**Du lär dig om canvas transformationer och rotation.**
 
 Lägg till en roterande animation på mynten för att göra dem mer visuellt tilltalande. Du kan använda `ctx.rotate()` i `Coin.draw()` metoden för att rotera myntet baserat på tid eller en intern räknare.
 
@@ -274,28 +474,147 @@ ctx.restore()
 ```
 ## Sammanfattning
 
-Vi har nu tittat på hur du kan fortsätta lära dig mer om hur en spelmotor är uppbyggd genom objektorienterad programmering. Vi fortsätter att utöka vårt grundläggande `GameObject` med egenskaper som `markedForDeletion` för att hantera borttagning av objekt på ett säkert och återanvändbart sätt. Vi skapar sedan objekt i spelvärlden som `Coin` som spelaren kan interagera med.
-Vi tittar senda på hur vi kan hålla reda på spelets tillstånd (score, antal mynt) i `Game.js` och visa detta för spelaren med en dedikerad `UI` klass.
+I detta steg har vi utforskat flera viktiga design patterns och arkitekturkoncept:
+
+**markedForDeletion Pattern:**
+- Två-stegs process: markera → ta bort
+- Säker array-hantering (ingen modification under iteration)
+- Återanvändbart pattern för alla dynamiska objekt
+
+**Vem äger vad:**
+- `Coin` äger sin `value` (inkapsling)
+- `Game` äger total `score` (centraliserad state)
+- Tydliga ansvarsområden mellan klasser
+
+**State Management:**
+- Centralisera game state i `Game` klassen
+- Skalbart för framtida features (achievements, combos, powerups)
+- Ett ställe att läsa och modifiera kritisk data
+
+**Model-View Separation:**
+- `Game` = Model (äger data och logik)
+- `UI` = View (läser och presenterar)
+- Separation gör UI-ändringar enkla
+- Förberedelse för responsiv UI, olika vyer, debug-overlays
+
+**Game Juice:**
+- Bob-animation med `Math.sin()` för smooth rörelse
+- Visuell feedback gör pickups mer satisfying
+- Enkla matematiska formler för organisk rörelse
+
+**Reflektion framåt:**
+När vi nu har Player, Platforms, och Coins i `Game.js` börjar vi se ett mönster - vår `Game` klass växer för varje feature. Detta är naturligt i början, men snart kommer vi behöva fundera på **hur vi strukturerar kod när komplexiteten ökar**. Det är precis vad nästa steg handlar om!
 
 ### Testfrågor
 
-1. Varför lägger vi till `markedForDeletion` i `GameObject` istället för i varje individuell klass som `Coin`?
-2. Förklara skillnaden mellan att markera ett objekt för borttagning och att faktiskt ta bort det. Varför gör vi detta i två separata steg?
-3. Vad händer om vi inte kontrollerar `!coin.markedForDeletion` i kollisionslogiken? Ge ett exempel på en potentiell bug.
-4. Varför ärver `Coin` från `GameObject` istället för att vara en helt separat klass?
-5. Förklara skillnaden mellan `intersects()` och `getCollisionData()`. När använder vi vilket?
-6. Varför ritas UI sist i `draw()` metoden? Vad händer om vi ritar den först?
-7. Beskriv hela flödet från att spelaren träffar ett mynt till att myntet försvinner. Vilka metoder anropas i vilken ordning?
-8. Hur skulle `markedForDeletion` användas för att ta bort projectiles som flyger utanför skärmen? Skriv pseudo-kod.
+#### Grundläggande förståelse
 
-## Nästa steg
+1. **Förklara `markedForDeletion` pattern i två steg:**
+   - Vad händer i markering-steget?
+   - Vad händer i cleanup-steget?
+   - Varför gör vi detta i två separata steg istället för `splice()` direkt?
 
-I nästa steg kan du utforska att lägga till fiender som rör sig runt i spelvärlden och kan skada spelaren vid kollision. Detta kommer att introducera mer komplexa interaktioner och ytterligare game state-hantering, såsom spelarens hälsa och liv.
+2. **Varför lägger vi till `markedForDeletion` i `GameObject` istället för i `Coin`?**
+   - Vilka andra objekt kommer använda samma pattern?
+   - Hur främjar detta återanvändbarhet?
 
-Byt branch till `05-enemies` och fortsätt till nästa del i guiden!
+3. **Vad händer om vi glömmer checken `!coin.markedForDeletion`?**
+   - Rita ett scenario med frames som visar buggen
+   - Hur många gånger får spelaren poäng för samma mynt?
+
+#### Vem äger vad - ansvar och inkapsling
+
+4. **Förklara "who owns what" principen:**
+   - Varför äger `Coin` sin egen `value`?
+   - Varför äger `Game` totala `score`?
+   - Vad skulle hända om alla mynt delade en global `score` variabel?
+
+5. **Vem ansvarar för vad?**
+   - Vilken klass ansvarar för att rita ett mynt?
+   - Vilken klass ansvarar för att avgöra OM ett mynt ska ritas?
+   - Vilken klass ansvarar för att räkna samman total score?
+
+#### State management och centralisering
+
+6. **Varför centraliserar vi score i `Game` klassen?**
+   - Vilka problem löser detta?
+   - Hur skulle alternativet (score i Player) se ut?
+   - Tänk framåt: Om vi har achievements, powerups, combo-multipliers - var ska de vara?
+
+7. **Game state vs Game logic:**
+   - Ge exempel på 3 saker som är "state" i vårt spel
+   - Ge exempel på 3 saker som är "logic" i vårt spel
+   - Varför är det viktigt att skilja på dessa?
+
+#### Model-View separation
+
+8. **Förklara Model-View separation i vårt spel:**
+   - Vilken klass är "Model"? (Vad den äger och gör)
+   - Vilken klass är "View"? (Vad den äger och gör)
+   - Varför låter vi UI läsa från Game istället för att Game skriver direkt på canvas?
+
+9. **Vad händer om vi blandar Model och View?**
+   - Ge exempel på hur kod skulle se ut om Game innehöll all UI-ritnings-kod
+   - Vilka problem får vi vid UI-ändringar?
+   - Hur gör separation detta enklare?
+
+#### Collision och spelkänsla
+
+10. **Varför använder vi `intersects()` för mynt men `getCollisionData()` för plattformar?**
+    - Vad är skillnaden mellan metoderna?
+    - När behöver vi riktningsinformation?
+    - När räcker det med ja/nej-svar?
+
+11. **Game juice i Coin klassen:**
+    - Förklara `Math.sin(this.bobTimer * 5) * 3` - vad gör varje del?
+    - Varför använder vi sinus för bob-animation?
+    - Hur skulle du ändra koden för snabbare/långsammare bob?
+
+#### Design patterns och skalbarhet
+
+12. **Rita flödet från kollision till borttagning:**
+    ```
+    Frame N:   [Rita hela flödet med metodanrop]
+    Frame N+1: [Vad händer nästa frame?]
+    Frame N+2: [När försvinner myntet?]
+    ```
+
+13. **Hur används samma pattern för andra objekt?**
+    - En projectile flyger utanför skärmen - skriv pseudo-kod
+    - En enemy dör (health = 0) - skriv pseudo-kod
+    - En particle effekt är färdig - skriv pseudo-kod
+
+14. **Ordning i `Game.draw()`:**
+    - Varför ritas UI sist?
+    - Vad händer om vi ritar mynt efter spelare?
+    - Skulle ordningen vara viktig om vi hade en particle-system?
+
+#### Arkitektur och framtid
+
+15. **Reflektion - Vad händer när Game växer?**
+    - Just nu har vi player, platforms, coins i Game
+    - Om vi lägger till enemies, projectiles, particles, powerups, traps...
+    - Vilka problem ser du komma?
+    - Hur skulle en array `this.entities = []` hjälpa?
+
+16. **Separation of Concerns:**
+    - Hur många olika ansvarsområden har Game just nu?
+    - Vilka skulle kunna separeras ut i egna klasser?
+    - Jämför med tidigare steg - växer Game's ansvar?
+
+## Nästa steg - Refactoring och fiender
+
+**Vad du har lärt dig i detta steg:**
+- **markedForDeletion pattern** - Säker två-stegs borttagning
+- **Vem äger vad?** - Vem äger vilken data och ansvar
+- **State management** - Centraliserad state i Game
+- **Model-View separation** - Game äger data, UI presenterar
+- **Game juice** - Bob-animation med Math.sin()
+
+Byt branch till `05-enemies` och fortsätt!
 
 ```bash
-git checkout enemies
+git checkout 05-enemies
 ```
 
-Öppna sedan filen [05-enemies.md](05-enemies.md) för att fortsätta!
+Öppna sedan filen [Steg 5, enemies.md](05-enemies.md) för att fortsätta!
