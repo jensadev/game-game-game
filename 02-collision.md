@@ -1,49 +1,33 @@
 # Steg 2 - Kollisionsdetektering
 
-I den här delen lär vi oss om kollisionsdetektering - hur vi kan upptäcka när två objekt i spelet kolliderar med varandra. Detta är fundamentalt för att skapa interaktiva spel där spelaren kan plocka upp föremål, stöta på hinder, eller ta skada från fiender.
+Vi lär oss hur två objekt kan upptäcka när de kolliderar - fundamentalt för interaktiva spel.
 
 ## Vad lär vi oss?
 
 I detta steg fokuserar vi på:
-- **AABB Collision Detection** - Axis-Aligned Bounding Box, den vanligaste kollisionsformen
-- **Separation of Concerns** - Vem ansvarar för kollisionskontroll?
-- **Single Responsibility Principle** - Game organiserar, GameObject tillhandahåller verktyg
-- **Inkapsling av algoritmer** - Kollisionslogik dold bakom enkla metoder
+- **AABB-kollision** - Axis-Aligned Bounding Box, enklaste kollisionsformen
+- **Single Responsibility** - Vem äger ansvaret för kollisionskontroll?
+- **Riktningsdetektering** - Från vilket håll sker kollisionen?
+- **Separation av ansvar** - Player vs Game vs GameObject
 
-### Varför är kollision så viktig?
+## Översikt
 
-Kollision är grunden för **all interaktivitet** i spel:
-- Spelaren står på plattformar (fysik)
-- Spelaren plockar upp mynt (collectibles)
-- Spelaren tar skada från fiender (combat)
-- Spelaren trycker på knappar (interaction)
-
-Utan kollisionsdetektering skulle allt bara glida igenom varandra!
+För att implementera kollisioner behöver vi:
+1. **intersects() metod** - Enkel ja/nej-kontroll av överlapp
+2. **getCollisionData() metod** - Detaljerad info om riktning och överlapp
+3. **Kollisionskontroll i Game.js** - Game organiserar kontrollen
+4. **Separation av Player** - Lagra spelaren separat från gameObjects
 
 ## Förutsättningar
 
 Innan du börjar med kollisioner bör du ha:
 - En fungerande `GameObject`-klass
-- En `Player`-klass som kan röra sig (se [01-player.md](01-player.md))
+- En `Player`-klass som kan röra sig (se [player.md](01-player.md))
 - Minst en annan typ av objekt (t.ex. `Rectangle`)
 
 ## Vad är AABB-kollision?
 
 AABB står för **Axis-Aligned Bounding Box** - det är den enklaste och snabbaste formen av kollisionsdetektering för rektanglar.
-
-**Varför kallas det "Axis-Aligned"?**
-- Bounding Box = En osynlig låda runt objektet
-- Axis-Aligned = Lådan är alltid parallell med X- och Y-axlarna (inte roterad)
-
-**Fördelar:**
-- Extremt snabb att beräkna (bara 4 jämförelser)
-- Fungerar perfekt för rektangulära objekt
-- Enkel att förstå och implementera
-
-**Begränsningar:**
-- Fungerar inte för roterade objekt
-- Inte perfekt för cirklar (men ofta tillräckligt bra)
-- Kan ge "false positives" i hörnen
 
 ### Hur fungerar det?
 
@@ -75,7 +59,7 @@ Två rektanglar kolliderar om de **överlappar varandra**. För att kolla detta 
       └──────────┘              └──────────┘
 ```
 
-### Implementering i GameObject - Inkapsling av komplexitet
+### Implementering i GameObject
 
 I `GameObject`-klassen finns redan metoden `intersects()` som kontrollerar AABB-kollision. Den fungerar så att den tar ett annat `GameObject`, `other`, som parameter och returnerar `true` om de kolliderar, annars `false`.
 
@@ -88,71 +72,18 @@ intersects(other) {
 }
 ```
 
-**OOP-principer här:**
-- **Inkapsling**: Den komplexa matematiken är dold bakom ett enkelt interface - `intersects(other)`
-- **Återanvändbarhet**: Alla GameObject-subklasser får denna metod automatiskt
-- **Polymorfism**: `other` kan vara vilken GameObject som helst (Player, Enemy, Coin...)
+## Var ska kollision kontrolleras?
 
-**Varför i GameObject?**
-Detta är en **generell** operation som alla spelobjekt kan behöva. Istället för att duplicera koden i Player, Enemy, Coin, etc., placerar vi den i basklassen.
+När vi frågar oss var kollisionskontrollen ska ske tänker vi på ansvar: Är det spelaren som ansvarar för att kolla om den kolliderar med andra objekt, eller är det spelet som helhet?
 
-**Reflektion:** Detta är ett exempel på "Don't Repeat Yourself" (DRY) principen - skriv inte samma kod flera gånger!
-
-## Var ska kollision kontrolleras? - Arkitekturbeslut
-
-Om vi minns så har vi pratat en hel del om vad som ansvarar för vad i den kod vi skriver. I det här fallet måste vi fråga oss: **Var ska kollisionskontrollen ske?**
-
-### Tre möjliga ansatser:
-
-**1. I Player-klassen?**
-```javascript
-// I Player.update()
-this.gameObjects.forEach(obj => {
-    if (this.intersects(obj)) {
-        // hantera kollision
-    }
-})
-```
-- **Problem:** Player måste känna till alla andra objekt
-- **Problem:** Tight coupling - Player är beroende av andra klasser
-- **Problem:** Vad händer när vi vill kolla Enemy vs Enemy?
-
-**2. I GameObject-klassen?**
-```javascript
-// I GameObject.update()
-checkCollisions() {
-    // ...
-}
-```
-- **Problem:** Varje objekt måste känna till alla andra objekt
-- **Problem:** N² kollisionskontroller (varje objekt kollar mot varje annat)
-
-**3. I Game-klassen?** ✅
-```javascript
-// I Game.update()
-if (this.player.intersects(obj)) {
-    // hantera kollision
-}
-```
-- **Fördelar:** Game har överblick över alla objekt
-- **Fördelar:** Centraliserad kollisionslogik
-- **Fördelar:** Följer Single Responsibility Principle
-
-### Single Responsibility Principle (SRP)
-
-**Player ansvarar för:** Sin egen rörelse och rendering
-**Enemy ansvarar för:** Sin egen AI och rendering
-**Game ansvarar för:** Att organisera och koordinera alla objekt
-
-Detta följer **Single Responsibility Principle** - varje klass ska ha ett tydligt, avgränsat ansvar.
+Det är `Game`-klassens ansvar att kontrollera kollisioner. Detta följer **Single Responsibility Principle**:
 
 **Varför Game?**
-- Game har överblick över alla objekt
-- Spelets regler hanteras centralt
-- Player behöver inte veta om andra objekt
-- Lättare att lägga till nya objekttyper
+- Game har överblick över alla objekt.
+- Spelets regler hanteras centralt.
+- Player behöver inte veta om andra objekt.
 
-**Viktigt:** Vi sparar spelaren separat i `Game`, inte som en del av `gameObjects`-arrayen. Detta gör det enklare att hantera spelaren direkt och undviker onödig iteration.
+**Viktigt:** Vi behöver sparar spelaren separat i `Game`, inte som en del av `gameObjects`-arrayen. Detta gör det enklare att hantera spelaren direkt och undviker onödig iteration över alla objekt när vi bara vill uppdatera eller rita spelaren.
 
 ```javascript
 // I Game.js constructor
@@ -314,24 +245,16 @@ I den här delen så har vi använt våra klasser för att faktiskt implementera
 4. Varför ritar vi spelaren sist i `draw()`-metoden?
 5. Vad händer om spelaren rör sig väldigt snabbt mot ett tunt objekt? (detta kallas tunneling)
 6. Hur kan vi ändra färgen på ett objekt vid kollision för visuell feedback?
+7. Hur skulle du använda AABB-kollision för att detektera om spelaren står på en plattform? Vad behöver du veta?
 
 ## Nästa steg
 
-**Vad du lärt dig:**
-- AABB Collision Detection - den vanligaste kollisionsalgoritmen
-- Single Responsibility Principle - Game organiserar, GameObject tillhandahåller verktyg
-- Inkapsling av algoritmer - komplex logik dold bakom enkla metoder
-- Tight coupling vs Loose coupling - varför centralisering är viktigt
-- DRY-principen - återanvänd kod genom arv
+Med kollisionsdetektering på plats kan vi nu gå vidare till att implementera mer avancerad fysik, som gravitation och hopp. Vi kommer också att titta på hur vi kan hantera olika typer av objekt och deras interaktioner med spelaren.
 
-**Nästa:** Fysik med gravitation och hopp! Vi kommer använda kollisionsdetektering för att låta spelaren stå på plattformar.
-
-Byt till `03-physics` branchen:
+Byt branch till `03-physics` och fortsätt till nästa del i guiden!
 
 ```bash
 git checkout 03-physics
 ```
 
-Läs sedan **[Steg 3 - Physics](03-physics.md)** för att fortsätta!
-
-**Tips:** I nästa steg kommer vi introducera `getCollisionData()` - en mer avancerad kollisionsmetod som ger oss **riktning** på kollisionen. Detta blir viktigt för att avgöra om spelaren landar på en plattform eller träffar sidan!
+Öppna sedan filen [Steg 3 - Fysik](03-physics.md) för att fortsätta!
