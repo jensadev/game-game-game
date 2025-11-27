@@ -297,12 +297,11 @@ Det är funktioner som detta som faktiskt börjar skapa en gameloop där spelare
 1. Var definieras fysik-konstanterna `gravity` och `friction` och varför placeras de där?
 2. Hur appliceras gravitation på spelaren i varje frame?
 3. Vad är syftet med `friction` (luftmotståndet) och hur påverkar det spelarens fallhastighet? Vad händer om vi tar bort det?
-4. Förklara skillnaden mellan `intersects()` och `getCollisionData()` metoderna i `GameObject`. När bör du använda den ena över den andra?
-5. Hur beräknar `getCollisionData()` från vilken riktning en kollision sker? Beskriv processen steg för steg.
-6. Varför kontrollerar vi `this.player.velocityY > 0` när vi hanterar kollision från 'top'? Vad skulle hända om vi inte hade detta villkor?
-7. Vad händer med `isGrounded` egenskapen under en frames uppdatering i `Game.js`? Varför sätts den till `false` först?
-8. I vilken ordning sker uppdateringarna i `Game.js` `update()` metoden och varför är den ordningen viktig? (gameObjects → platforms → player → kollisioner)
-9. Hur kan du justera hoppkraften för att göra spelet mer utmanande eller lättare? Vilka värden skulle du ändra och varför?
+4. Förklara skillnaden mellan `intersects()` och `getCollisionData()` metoderna i `GameObject`. Hur beräknar `getCollisionData()` från vilken riktning en kollision sker?
+5. Varför kontrollerar vi `this.player.velocityY > 0` när vi hanterar kollision från 'top'? Vad skulle hända om vi inte hade detta villkor?
+6. Vad händer med `isGrounded` egenskapen under en frames uppdatering i `Game.js`? Varför sätts den till `false` först?
+7. Hur kan du justera hoppkraften för att göra spelet mer utmanande eller lättare? Vilka värden skulle du ändra och varför?
+8. Hur gör physics-systemet det lättare att lägga till collectibles i nästa steg?
 
 ## Nästa steg
 

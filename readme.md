@@ -132,6 +132,8 @@ Det här repot ger en grundläggande struktur för att skapa 2D-spel med JavaScr
 6. Vad händer i main.js och varför behövs requestAnimationFrame?
 7. Hur sparar InputHandler information om nedtryckta tangenter?
 8. Vilken Canvas-metod rensar skärmen mellan varje frame och varför behövs det?
+9. Varför måste vi rensa canvas varje frame? Vad händer om vi skippar `clearRect()`?
+10. Beskriv hela flödet från tangent-tryck till pixlar på skärmen. Vilka klasser är involverade?
 
 ## Nästa steg
 

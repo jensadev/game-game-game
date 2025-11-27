@@ -245,6 +245,7 @@ I den här delen så har vi använt våra klasser för att faktiskt implementera
 4. Varför ritar vi spelaren sist i `draw()`-metoden?
 5. Vad händer om spelaren rör sig väldigt snabbt mot ett tunt objekt? (detta kallas tunneling)
 6. Hur kan vi ändra färgen på ett objekt vid kollision för visuell feedback?
+7. Hur skulle du använda AABB-kollision för att detektera om spelaren står på en plattform? Vad behöver du veta?
 
 ## Nästa steg
 

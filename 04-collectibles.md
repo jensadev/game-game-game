@@ -287,6 +287,7 @@ Vi tittar senda på hur vi kan hålla reda på spelets tillstånd (score, antal 
 6. Varför ritas UI sist i `draw()` metoden? Vad händer om vi ritar den först?
 7. Beskriv hela flödet från att spelaren träffar ett mynt till att myntet försvinner. Vilka metoder anropas i vilken ordning?
 8. Hur skulle `markedForDeletion` användas för att ta bort projectiles som flyger utanför skärmen? Skriv pseudo-kod.
+9. Hur skulle du använda `markedForDeletion` för att ta bort fiender? Vad är skillnaden jämfört med mynt?
 
 ## Nästa steg
 

@@ -140,7 +140,10 @@ Vi har även gett spelaren ett enkelt ansikte med ögon som tittar i rörelserik
 2. Hur används `directionX` och `directionY` för att få ögonen att "titta" åt rätt håll?
 3. Varför multiplicerar vi position med `deltaTime` i update-metoden?
 4. Hur fungerar det när vi stoppar spelaren från att gå utanför canvasens gränser?
-5. Vilka Canvas-metoder används för att rita spelarens mun som ett streck?
+5. Varför separerar vi position från velocity? Hur underlättar detta för kollisionsdetektering i nästa steg?
+6. Vad händer om `deltaTime` varierar mycket mellan frames? Varför är detta ett problem för framtida physics?
+7. Varför tänker vi på spelaren som en rektangel? Hur skulle du beskriva spelarens 'hitbox'?
+8. Vilka problem ser du med nuvarande kodstruktur när vi ska lägga till kollision med plattformar?
 
 ## Nästa steg
 
