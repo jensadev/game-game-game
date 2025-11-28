@@ -38,10 +38,12 @@ export default class Player extends GameObject {
             this.velocityX = -this.moveSpeed
             this.directionX = -1
             this.lastDirectionX = -1 // Spara riktning
+            this.flipX = true // Vänd spriten åt vänster
         } else if (this.game.inputHandler.keys.has('ArrowRight')) {
             this.velocityX = this.moveSpeed
             this.directionX = 1
             this.lastDirectionX = 1 // Spara riktning
+            this.flipX = false // Normal riktning (höger)
         } else {
             this.velocityX = 0
             this.directionX = 0

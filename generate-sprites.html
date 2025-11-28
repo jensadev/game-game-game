@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Generate Sprite Placeholders</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+        }
+        .sprite-container {
+            margin: 20px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 5px;
+            image-rendering: pixelated;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Sprite Placeholder Generator</h1>
+    
+    <div class="info">
+        <p><strong>Instructions:</strong></p>
+        <ol>
+            <li>Click "Generate All Sprites" to create placeholder images</li>
+            <li>Right-click each canvas and select "Save Image As..."</li>
+            <li>Save each file to <code>public/sprites/</code> with the filename shown below it</li>
+        </ol>
+    </div>
+
+    <button onclick="generateAllSprites()">Generate All Sprites</button>
+    <button onclick="downloadAllAsZip()" style="background: #2196F3;">Download All as Files</button>
+
+    <div id="sprites"></div>
+
+    <script>
+        const spriteDefinitions = [
+            { name: 'player.png', width: 50, height: 50, color: '#4CAF50', text: 'P', label: 'Player' },
+            { name: 'enemy.png', width: 40, height: 40, color: '#F44336', text: 'E', label: 'Enemy' },
+            { name: 'coin.png', width: 20, height: 20, color: '#FFC107', text: 'C', label: 'Coin' },
+            { name: 'projectile.png', width: 12, height: 6, color: '#2196F3', text: '→', label: 'Projectile' },
+            { name: 'platform.png', width: 32, height: 32, color: '#795548', text: '#', label: 'Platform' }
+        ];
+
+        function generateSprite(def) {
+            const canvas = document.createElement('canvas');
+            canvas.width = def.width;
+            canvas.height = def.height;
+            const ctx = canvas.getContext('2d');
+
+            // Fill background
+            ctx.fillStyle = def.color;
+            ctx.fillRect(0, 0, def.width, def.height);
+
+            // Draw text
+            ctx.fillStyle = 'white';
+            const fontSize = Math.floor(Math.min(def.width, def.height) * 0.6);
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(def.text, def.width / 2, def.height / 2);
+
+            return canvas;
+        }
+
+        function generateAllSprites() {
+            const container = document.getElementById('sprites');
+            container.innerHTML = '';
+
+            spriteDefinitions.forEach(def => {
+                const div = document.createElement('div');
+                div.className = 'sprite-container';
+
+                const canvas = generateSprite(def);
+                
+                const label = document.createElement('div');
+                label.innerHTML = `<strong>${def.label}</strong><br>${def.name}<br>${def.width}×${def.height}`;
+                label.style.textAlign = 'center';
+                label.style.marginTop = '5px';
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = 'Download';
+                downloadBtn.style.fontSize = '12px';
+                downloadBtn.style.padding = '5px 10px';
+                downloadBtn.style.marginTop = '5px';
+                downloadBtn.onclick = () => downloadCanvas(canvas, def.name);
+
+                div.appendChild(canvas);
+                div.appendChild(label);
+                div.appendChild(downloadBtn);
+                container.appendChild(div);
+            });
+        }
+
+        function downloadCanvas(canvas, filename) {
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        function downloadAllAsZip() {
+            // For a simple solution, download each file individually
+            spriteDefinitions.forEach((def, index) => {
+                setTimeout(() => {
+                    const canvas = generateSprite(def);
+                    downloadCanvas(canvas, def.name);
+                }, index * 500); // Stagger downloads to avoid browser blocking
+            });
+            alert('Downloading all sprites... Check your downloads folder!');
+        }
+
+        // Generate sprites on page load
+        window.onload = generateAllSprites;
+    </script>
+</body>
+</html>

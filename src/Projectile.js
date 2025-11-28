@@ -8,6 +8,9 @@ export default class Projectile extends GameObject {
         this.startX = x // Spara startposition
         this.maxDistance = 800 // Max en skärm långt
         this.color = 'orange'
+        
+        // Vänd spriten om den skjuts åt vänster
+        this.flipX = directionX < 0
     }
     
     update(deltaTime) {
@@ -22,11 +25,16 @@ export default class Projectile extends GameObject {
     }
     
     draw(ctx, camera = null) {
-        // Beräkna screen position
+        // Om vi har en sprite, använd den från GameObject.draw()
+        if (this.sprite) {
+            super.draw(ctx, camera)
+            return
+        }
+        
+        // Fallback: rita som färgad rektangel
         const screenX = camera ? this.x - camera.x : this.x
         const screenY = camera ? this.y - camera.y : this.y
         
-        // Rita projektilen som en avlång rektangel
         ctx.fillStyle = this.color
         ctx.fillRect(screenX, screenY, this.width, this.height)
     }

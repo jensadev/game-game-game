@@ -6,6 +6,7 @@ import Enemy from './Enemy.js'
 import UserInterface from './UserInterface.js'
 import Camera from './Camera.js'
 import Projectile from './Projectile.js'
+import ImageManager from './ImageManager.js'
 
 export default class Game {
     constructor(width, height) {
@@ -25,6 +26,10 @@ export default class Game {
         this.score = 0
         this.coinsCollected = 0
         this.totalCoins = 0 // Sätts när vi skapar coins
+        
+        // Image management
+        this.imageManager = new ImageManager()
+        this.imagesLoaded = false
 
         this.inputHandler = new InputHandler(this)
         this.ui = new UserInterface(this)
@@ -32,9 +37,24 @@ export default class Game {
         // Camera
         this.camera = new Camera(0, 0, width, height)
         this.camera.setWorldBounds(this.worldWidth, this.worldHeight)
+    }
+    
+    async loadAssets() {
+        const images = [
+            { name: 'player', path: '/sprites/player.png' },
+            { name: 'enemy', path: '/sprites/enemy.png' },
+            { name: 'coin', path: '/sprites/coin.png' },
+            { name: 'projectile', path: '/sprites/projectile.png' },
+            { name: 'platform', path: '/sprites/platform.png' }
+        ]
         
-        // Initiera spelet
-        this.init()
+        try {
+            await this.imageManager.loadImages(images)
+            this.imagesLoaded = true
+            console.log('All images loaded!')
+        } catch (error) {
+            console.error('Failed to load images:', error)
+        }
     }
     
     init() {
@@ -109,10 +129,32 @@ export default class Game {
 
         // Skapa andra objekt i spelet (valfritt)
         this.gameObjects = []
+        
+        // Sätt sprites om de är laddade
+        if (this.imagesLoaded) {
+            this.player.setSprite('player')
+            
+            this.platforms.forEach(platform => {
+                platform.setSprite('platform')
+            })
+            
+            this.coins.forEach(coin => {
+                coin.setSprite('coin')
+            })
+            
+            this.enemies.forEach(enemy => {
+                enemy.setSprite('enemy')
+            })
+        }
     }
     
     addProjectile(x, y, directionX) {
         const projectile = new Projectile(this, x, y, directionX)
+        if (this.imagesLoaded) {
+            projectile.setSprite('projectile')
+        }
+        this.projectiles.push(projectile)
+    }
         this.projectiles.push(projectile)
     }
     

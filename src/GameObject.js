@@ -7,10 +7,37 @@ export default class GameObject {
         this.width = width
         this.height = height
         this.markedForDeletion = false
+        
+        // Sprite support
+        this.sprite = null
+        this.flipX = false // Vänd sprite horisontellt
+    }
+    
+    setSprite(spriteName) {
+        if (this.game.imageManager) {
+            this.sprite = this.game.imageManager.getImage(spriteName)
+        }
     }
 
     draw(ctx, camera = null) {
-        // Gör inget, implementera i subklasser
+        // Beräkna screen position
+        const screenX = camera ? this.x - camera.x : this.x
+        const screenY = camera ? this.y - camera.y : this.y
+        
+        if (this.sprite) {
+            ctx.save()
+            
+            // Flippa om flipX är true
+            if (this.flipX) {
+                ctx.translate(screenX + this.width, screenY)
+                ctx.scale(-1, 1)
+                ctx.drawImage(this.sprite, 0, 0, this.width, this.height)
+            } else {
+                ctx.drawImage(this.sprite, screenX, screenY, this.width, this.height)
+            }
+            
+            ctx.restore()
+        }
     }
 
     // Kolla om detta objekt kolliderar med ett annat
