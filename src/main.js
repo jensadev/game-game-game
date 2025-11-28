@@ -15,14 +15,7 @@ const setupGame = (canvas) => {
     let gameLoop
 
     const runGame = (timeStamp) => {
-        // Nollställ lastTime vid restart för att undvika jättestort deltaTime
-        if (game.needsTimeReset) {
-            lastTime = timeStamp
-            game.needsTimeReset = false
-        }
-        
-        // Räkna ut tid sedan förra frame
-        // Förhindra för stora deltaTime värden (t.ex. första framen)
+        // Förhindra för stora deltaTime värden (första frame, tab-switch, etc)
         if (lastTime === 0) {
             lastTime = timeStamp
         }
