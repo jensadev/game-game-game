@@ -18,13 +18,17 @@ export default class Coin extends GameObject {
         this.bobOffset += this.bobSpeed * deltaTime
     }
 
-    draw(ctx) {
+    draw(ctx, camera = null) {
+        // Beräkna screen position (om camera finns)
+        const screenX = camera ? this.x - camera.x : this.x
+        const screenY = camera ? this.y - camera.y : this.y
+        
         // Beräkna y-position med bob
         const bobY = Math.sin(this.bobOffset) * this.bobDistance
         // Rita myntet som en cirkel
         ctx.fillStyle = this.color
         ctx.beginPath()
-        ctx.arc(this.x + this.size / 2, this.y + this.size / 2 + bobY, this.size / 2, 0, Math.PI * 2)
+        ctx.arc(screenX + this.size / 2, screenY + this.size / 2 + bobY, this.size / 2, 0, Math.PI * 2)
         ctx.fill()
     }
 }

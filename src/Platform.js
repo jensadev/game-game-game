@@ -10,14 +10,18 @@ export default class Platform extends GameObject {
         // Plattformar är statiska, gör inget
     }
 
-    draw(ctx) {
+    draw(ctx, camera = null) {
+        // Beräkna screen position (om camera finns)
+        const screenX = camera ? this.x - camera.x : this.x
+        const screenY = camera ? this.y - camera.y : this.y
+        
         // Rita plattformen
         ctx.fillStyle = this.color
-        ctx.fillRect(this.x, this.y, this.width, this.height)
+        ctx.fillRect(screenX, screenY, this.width, this.height)
         
         // Rita en enkel kant/skugga för att ge djup
         ctx.strokeStyle = '#654321'
         ctx.lineWidth = 2
-        ctx.strokeRect(this.x, this.y, this.width, this.height)
+        ctx.strokeRect(screenX, screenY, this.width, this.height)
     }
 }

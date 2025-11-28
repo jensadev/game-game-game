@@ -9,7 +9,7 @@ export default class GameObject {
         this.markedForDeletion = false
     }
 
-    draw(ctx) {
+    draw(ctx, camera = null) {
         // Gör inget, implementera i subklasser
     }
 

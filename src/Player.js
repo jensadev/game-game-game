@@ -110,7 +110,7 @@ export default class Player extends GameObject {
         }
     }
 
-    draw(ctx) {
+    draw(ctx, camera = null) {
         // Blinka när spelaren är invulnerable
         if (this.invulnerable) {
             const blinkSpeed = 100 // millisekunder per blink
@@ -119,26 +119,30 @@ export default class Player extends GameObject {
             }
         }
         
+        // Beräkna screen position (om camera finns)
+        const screenX = camera ? this.x - camera.x : this.x
+        const screenY = camera ? this.y - camera.y : this.y
+        
         // Rita spelaren som en rektangel
         ctx.fillStyle = this.color
-        ctx.fillRect(this.x, this.y, this.width, this.height)
+        ctx.fillRect(screenX, screenY, this.width, this.height)
 
         // Rita ögon
         ctx.fillStyle = 'white'
-        ctx.fillRect(this.x + this.width * 0.2, this.y + this.height * 0.2, this.width * 0.2, this.height * 0.2)
-        ctx.fillRect(this.x + this.width * 0.6, this.y + this.height * 0.2, this.width * 0.2, this.height * 0.2)
+        ctx.fillRect(screenX + this.width * 0.2, screenY + this.height * 0.2, this.width * 0.2, this.height * 0.2)
+        ctx.fillRect(screenX + this.width * 0.6, screenY + this.height * 0.2, this.width * 0.2, this.height * 0.2)
         
         // Rita pupiller
         ctx.fillStyle = 'black'
         ctx.fillRect(
-            this.x + this.width * 0.25 + this.directionX * this.width * 0.05, 
-            this.y + this.height * 0.25 + this.directionY * this.width * 0.05, 
+            screenX + this.width * 0.25 + this.directionX * this.width * 0.05, 
+            screenY + this.height * 0.25 + this.directionY * this.width * 0.05, 
             this.width * 0.1, 
             this.height * 0.1
         )
         ctx.fillRect(
-            this.x + this.width * 0.65 + this.directionX * this.width * 0.05, 
-            this.y + this.height * 0.25 + this.directionY * this.width * 0.05, 
+            screenX + this.width * 0.65 + this.directionX * this.width * 0.05, 
+            screenY + this.height * 0.25 + this.directionY * this.width * 0.05, 
             this.width * 0.1, 
             this.height * 0.1
         )
@@ -146,8 +150,8 @@ export default class Player extends GameObject {
         ctx.strokeStyle = 'black'
         ctx.lineWidth = 2
         ctx.beginPath()
-        ctx.moveTo(this.x + this.width * 0.3, this.y + this.height * 0.65)
-        ctx.lineTo(this.x + this.width * 0.7, this.y + this.height * 0.65)
+        ctx.moveTo(screenX + this.width * 0.3, screenY + this.height * 0.65)
+        ctx.lineTo(screenX + this.width * 0.7, screenY + this.height * 0.65)
         ctx.stroke()
     }
 }

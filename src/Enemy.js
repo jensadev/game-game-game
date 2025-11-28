@@ -98,9 +98,13 @@ export default class Enemy extends GameObject {
         }
     }
 
-    draw(ctx) {
+    draw(ctx, camera = null) {
+        // Beräkna screen position (om camera finns)
+        const screenX = camera ? this.x - camera.x : this.x
+        const screenY = camera ? this.y - camera.y : this.y
+        
         // Rita fienden som en röd rektangel
         ctx.fillStyle = this.color
-        ctx.fillRect(this.x, this.y, this.width, this.height)
+        ctx.fillRect(screenX, screenY, this.width, this.height)
     }
 }
