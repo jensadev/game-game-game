@@ -51,7 +51,6 @@ export default class Game {
         try {
             await this.imageManager.loadImages(images)
             this.imagesLoaded = true
-            console.log('All images loaded!')
         } catch (error) {
             console.error('Failed to load images:', error)
         }
@@ -155,9 +154,7 @@ export default class Game {
         }
         this.projectiles.push(projectile)
     }
-        this.projectiles.push(projectile)
-    }
-    
+
     restart() {
         this.init()
     }

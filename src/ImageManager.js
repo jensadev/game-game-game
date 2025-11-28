@@ -14,7 +14,6 @@ export default class ImageManager {
             img.onload = () => {
                 this.images[name] = img
                 this.loadedCount++
-                console.log(`Loaded image: ${name}`)
                 resolve(img)
             }
             

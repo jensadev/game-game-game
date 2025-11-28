@@ -154,7 +154,13 @@ export default class Player extends GameObject {
             }
         }
         
-        // Beräkna screen position (om camera finns)
+        // Om vi har en sprite, använd den
+        if (this.sprite) {
+            super.draw(ctx, camera)
+            return
+        }
+        
+        // Fallback: rita spelaren som en rektangel med ansikte
         const screenX = camera ? this.x - camera.x : this.x
         const screenY = camera ? this.y - camera.y : this.y
         
