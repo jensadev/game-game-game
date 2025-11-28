@@ -7,7 +7,7 @@ export default class Projectile extends GameObject {
         this.speed = 0.5 // pixels per millisekund
         this.startX = x // Spara startposition
         this.maxDistance = 800 // Max en skärm långt
-        this.color = '#ffff00'
+        this.color = 'orange'
     }
     
     update(deltaTime) {
