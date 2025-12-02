@@ -1,6 +1,6 @@
 # Steg 7: Kamera och sidscrolling
 
-I detta steg lägger vi till ett kamerasystem som följer spelaren. Detta är grundläggande för sidscrolling-spel där spelvärlden är större än skärmen.
+I detta steg lägger vi till ett kamerasystem som följer spelaren. Kameran låter oss skapa en spelvärld som är större än själva skärmen och hanterar hur vi ritar objekt relativt till kamerans position.
 
 ## Koncept: Världskoordinater vs skärmkoordinater
 
@@ -40,7 +40,7 @@ export class Camera {
         this.worldHeight = worldHeight
     }
     
-    // Följ ett objekt (t.ex. spelaren)
+    // Följ ett objekt (t.ex. spelaren) 
     follow(target) {
         // Centrera kameran på target
         this.targetX = target.x + target.width / 2 - this.width / 2
@@ -55,7 +55,7 @@ export class Camera {
             this.y += (this.targetY - this.y) * this.smoothing
         }
         
-        // Clampa kameran till världens gränser
+        // Clampa, begränsa kameran till världens gränser
         this.x = Math.max(0, Math.min(this.x, this.worldWidth - this.width))
         this.y = Math.max(0, Math.min(this.y, this.worldHeight - this.height))
     }
@@ -67,31 +67,14 @@ export class Camera {
                object.y + object.height > this.y &&
                object.y < this.y + this.height
     }
-    
-    // Översätt världskoordinater till skärmkoordinater
-    worldToScreen(worldX, worldY) {
-        return {
-            x: worldX - this.x,
-            y: worldY - this.y
-        }
-    }
-    
-    // Översätt skärmkoordinater till världskoordinater
-    screenToWorld(screenX, screenY) {
-        return {
-            x: screenX + this.x,
-            y: screenY + this.y
-        }
-    }
 }
 ```
 
+Med en follow metod så skapar vi ett kamera system som följer spelaren och gör att vi kan ha en spelvärld som är större än själva skärmen. Men även att vi kan följa ett `GameObject` som har `x` och `y` koordinater i världskoordinater. Det låter oss även flytta kameran till andra objekt i världen, som till exempel ett `Goal` eller en fiende.
+
 ## Uppdatera Game.js
 
-Importera kameran:
-```javascript
-import { Camera } from './Camera.js'
-```
+I `Game.js` behöver vi nu göra flera stora förändringar då världen, eller vår level, nu har ett större format. Börja med att importera `Camera`-klassen.
 
 I konstruktorn, skapa en större värld och initiera kameran:
 ```javascript
@@ -125,7 +108,8 @@ this.camera.follow(this.player)
 this.camera.update(deltaTime)
 ```
 
-I `draw()`, använd kameran för att endast rita synliga objekt och ge dem rätt position:
+I `draw()`, använd kameran för att endast rita synliga objekt och ge dem rätt position. Att rita enbart synliga objekt kallas för visibility culling och det gör vi för att förbättra prestanda när världen blir stor.
+
 ```javascript
 // Rita endast synliga plattformar
 this.platforms.forEach(platform => {
@@ -189,12 +173,13 @@ Samma mönster – lägg till `camera = null` parameter och översätt alla `thi
 ## Viktiga koncept
 
 ### 1. Linear interpolation (lerp)
-Istället för att kameran hoppar direkt till spelaren, använder vi lerp för mjuk följning:
+Istället för att kameran hoppar direkt till spelaren, använder vi lerp för mjuk följning. Lerp är ett sätt att interpolera mellan två värden på ett smidigt sätt. Med att interpolera menas att uppskatta värdet mellan två punkter.
+
 ```javascript
 this.x += (this.targetX - this.x) * this.smoothing
 ```
 
-Om `smoothing = 0.1` tar kameran 10% av steget varje frame. Detta ger en smidig kamerarörelse.
+Om `smoothing = 0.1` tar kameran 10% av steget varje frame. Detta ger en smidig kamerarörelse. Med ett högre värde blir kameran snabbare på att följa spelaren.
 
 ### 2. Visibility culling
 Vi kollar om objekt är inom kamerans viewport innan vi ritar dem:
@@ -230,24 +215,13 @@ När du kör spelet nu ska:
 ## Testfrågor
 
 1. Vad är skillnaden mellan världskoordinater och skärmkoordinater?
-
 2. Om spelaren är på `x = 1500` och kameran är på `x = 1200`, var på skärmen ritas spelaren?
-
 3. Vad gör `smoothing`-parametern i kameran?
-
 4. Varför är visibility culling viktigt?
-
 5. Hur översätter vi från världskoordinater till skärmkoordinater?
-
 6. Vad händer om vi glömmer att clampa kameran till världens gränser?
-
 7. Varför ska UI-element (som hälsa) INTE använda kamera-offset?
-
 8. Vad är lerp och varför använder vi det för kamerarörelse?
-
-9. Om `worldWidth = 2400` och `camera.width = 800`, vilket är det högsta värdet `camera.x` kan ha?
-
-10. Hur vet vi om ett objekt är synligt i kameran? Skriv pseudokod.
 
 ## Nästa steg
 

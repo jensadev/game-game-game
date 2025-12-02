@@ -29,7 +29,7 @@ export default class Camera {
         this.targetX = targetCenterX - this.width / 2
         this.targetY = targetCenterY - this.height / 2
         
-        // Clamp till world bounds
+        // Clamp, det vill säga begränsa till world bounds
         this.targetX = Math.max(0, Math.min(this.targetX, this.worldWidth - this.width))
         this.targetY = Math.max(0, Math.min(this.targetY, this.worldHeight - this.height))
     }
@@ -42,22 +42,6 @@ export default class Camera {
         // Avrunda för att undvika pixel-jitter
         this.x = Math.round(this.x)
         this.y = Math.round(this.y)
-    }
-    
-    // Konvertera world coordinates till screen coordinates
-    worldToScreen(worldX, worldY) {
-        return {
-            x: worldX - this.x,
-            y: worldY - this.y
-        }
-    }
-    
-    // Konvertera screen coordinates till world coordinates
-    screenToWorld(screenX, screenY) {
-        return {
-            x: screenX + this.x,
-            y: screenY + this.y
-        }
     }
     
     // Kolla om ett objekt är synligt på skärmen
