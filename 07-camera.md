@@ -218,7 +218,53 @@ När du kör spelet nu ska:
 
 Vårt system tillåter oss att flytta / följa ett annat objekt med kameran. Vi kan se det som grunden till att göra cutscenes tillexempel.
 
+Lägg till en knapp för att växla mellan att följa spelaren och att följa en fiende:
 
+```javascript
+// I Game.js constructor
+this.cameraTargetIndex = 0  // 0 = player, 1+ = enemies
+this.cameraTargets = []     // Array med alla möjliga targets
+
+// I init() - bygg targets array
+this.cameraTargets = [this.player, ...this.enemies]
+
+// I update() - hantera target switching
+if (this.inputHandler.keys.has('c') || this.inputHandler.keys.has('C')) {
+    // Växla till nästa target
+    this.cameraTargetIndex = (this.cameraTargetIndex + 1) % this.cameraTargets.length
+    
+    // Ta bort key för att förhindra spam
+    this.inputHandler.keys.delete('c')
+    this.inputHandler.keys.delete('C')
+    
+    console.log(`Camera following: ${this.cameraTargetIndex === 0 ? 'Player' : 'Enemy ' + this.cameraTargetIndex}`)
+}
+
+// Följ det valda target
+const currentTarget = this.cameraTargets[this.cameraTargetIndex]
+if (currentTarget && !currentTarget.markedForDeletion) {
+    this.camera.follow(currentTarget)
+} else {
+    // Om target är borttaget (t.ex. fiende död), gå tillbaka till spelaren
+    this.cameraTargetIndex = 0
+    this.camera.follow(this.player)
+}
+
+this.camera.update(deltaTime)
+```
+
+**Testa:**
+1. Starta spelet
+2. Tryck **C** för att växla till första fienden
+3. Kameran följer nu fienden medan spelaren försvinner ur bild
+4. Tryck **C** igen för nästa fiende
+5. Efter sista fienden, återgår den till spelaren
+
+**Varför är detta användbart?**
+- **Debug viewing** - Se vad som händer i andra delar av världen
+- **Cutscenes** - Skapa cinematiska sekvenser som fokuserar på olika objekt
+- **Spectator mode** - Låt spelaren observera efter död
+- **Tutorial sequences** - Visa spelaren viktiga platser i världen
 
 ### Få kameran att skaka
 
