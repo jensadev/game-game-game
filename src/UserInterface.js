@@ -31,34 +31,47 @@ export default class UserInterface {
         ctx.shadowBlur = 3
         
         // Rita score
-        const scoreText = `Score: ${this.game.score}`
-        ctx.fillText(scoreText, 20, 40)
+        ctx.fillText(`Score: ${this.game.score}`, 20, 40)
         
         // Rita coins collected
-        const coinsText = `Coins: ${this.game.coinsCollected}`
-        ctx.fillText(coinsText, 20, 70)
+        ctx.fillText(`Coins: ${this.game.coinsCollected}`, 20, 70)
         
-        // Rita health
-        const healthText = `Health: ${this.game.player.health}/${this.game.player.maxHealth}`
-        ctx.fillText(healthText, 20, 100)
+        ctx.restore()
         
-        // Rita health bars som hjärtan
-        for (let i = 0; i < this.game.player.maxHealth; i++) {
-            const heartX = 20 + i * 30
-            const heartY = 110
-            
-            if (i < this.game.player.health) {
-                // Fyllt hjärta
-                ctx.fillStyle = '#FF0000'
-            } else {
-                // Tomt hjärta
-                ctx.fillStyle = '#333333'
-            }
-            
-            // Rita enkelt hjärta (rektangel för enkelhetens skull)
-            ctx.fillRect(heartX, heartY, 20, 20)
+        // Rita health bar (egen metod)
+        this.drawHealthBar(ctx, 20, 90)
+    }
+    
+    drawHealthBar(ctx, x, y) {
+        const barWidth = 200
+        const barHeight = 20
+        const healthPercent = this.game.player.health / this.game.player.maxHealth
+        
+        ctx.save()
+        
+        // Bakgrund (grå)
+        ctx.fillStyle = '#333'
+        ctx.fillRect(x, y, barWidth, barHeight)
+        
+        // Nuvarande health (röd till grön gradient)
+        const healthWidth = barWidth * healthPercent
+        
+        // Färg baserat på health procent
+        if (healthPercent > 0.5) {
+            ctx.fillStyle = '#4CAF50' // Grön
+        } else if (healthPercent > 0.25) {
+            ctx.fillStyle = '#FFC107' // Gul
+        } else {
+            ctx.fillStyle = '#F44336' // Röd
         }
         
+        ctx.fillRect(x, y, healthWidth, barHeight)
+        
+        // Kant
+        ctx.strokeStyle = '#FFFFFF'
+        ctx.lineWidth = 2
+        ctx.strokeRect(x, y, barWidth, barHeight)
+
         ctx.restore()
     }
     
