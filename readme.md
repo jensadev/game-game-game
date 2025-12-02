@@ -71,6 +71,13 @@ Denna fil innehåller `Game`-klassen som är hjärtat i spelmotorn. Den hanterar
 
 Game.js roll är alltså att koordinera alla delar av spelet och se till att allt fungerar tillsammans.
 
+För att uppdatera och rita spelobjekt så itererar `Game`-klassen genom en lista av `gameObjects` och anropar deras respektive metoder. Detta sker i `update` och `draw` metoderna:
+
+```
+För varje objekt i gameObjects:
+    anropa objektets update(deltaTime) eller draw(ctx)
+```
+
 ### InputHandler.js
 
 Denna fil innehåller `InputHandler`-klassen som lyssnar på tangentbordsinput. Klassen sparar status för nedtryckta tangenter och tillhandahåller metoder för att kontrollera dessa.
