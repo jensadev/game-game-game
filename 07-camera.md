@@ -212,6 +212,152 @@ När du kör spelet nu ska:
 3. Plattformar och fiender synas utanför den ursprungliga skärmen
 4. Kameran sluta vid världens kanter
 
+## Uppgifter
+
+### Flytta kameran till ett annat objekt
+
+Vårt system tillåter oss att flytta / följa ett annat objekt med kameran. Vi kan se det som grunden till att göra cutscenes tillexempel.
+
+#### Ett mål - Flytta kameran till sista myntet
+
+När spelaren samlar det sista myntet, zooma kameran till det myntet före det försvinner.
+
+
+#### När spelaren dör - Fokusera på fienden
+
+Flytta kameran till den fiende som gav det sista slaget:
+
+### Få kameran att skaka
+
+Screen shake är en klassisk effekt för explosioner, skador eller kraftfulla händelser:
+
+```javascript
+// I Camera.js
+shake(intensity = 10, duration = 300) {
+    this.shakeIntensity = intensity
+    this.shakeDuration = duration
+    this.shakeTimeRemaining = duration
+}
+
+update(deltaTime) {
+    // ... befintlig kod ...
+    
+    // Hantera screen shake
+    if (this.shakeTimeRemaining > 0) {
+        this.shakeTimeRemaining -= deltaTime
+        
+        // Random offset baserat på intensitet
+        const progress = this.shakeTimeRemaining / this.shakeDuration
+        const currentIntensity = this.shakeIntensity * progress
+        
+        this.shakeOffsetX = (Math.random() - 0.5) * currentIntensity * 2
+        this.shakeOffsetY = (Math.random() - 0.5) * currentIntensity * 2
+    } else {
+        this.shakeOffsetX = 0
+        this.shakeOffsetY = 0
+    }
+}
+
+// I draw-metoderna, applicera shake offset
+draw(ctx, camera = null) {
+    const screenX = camera ? this.x - camera.x + camera.shakeOffsetX : this.x
+    const screenY = camera ? this.y - camera.y + camera.shakeOffsetY : this.y
+    // ... rita objektet ...
+}
+
+// Användning när spelaren tar skada
+this.game.camera.shake(15, 200)  // 15px intensitet, 200ms
+
+// När fiende dödas
+this.game.camera.shake(8, 150)   // Mindre shake
+```
+
+### Få kameran att blinka/fade
+
+Använd canvas alpha för att skapa fade-in/fade-out effekter:
+
+```javascript
+// I Camera.js
+flash(color = 'white', duration = 300) {
+    this.flashColor = color
+    this.flashDuration = duration
+    this.flashTimeRemaining = duration
+}
+
+fade(targetAlpha = 0, duration = 1000) {
+    this.fadeTargetAlpha = targetAlpha
+    this.fadeDuration = duration
+    this.fadeTimeRemaining = duration
+    this.fadeStartAlpha = this.fadeAlpha || 1
+}
+
+update(deltaTime) {
+    // ... befintlig kod ...
+    
+    // Hantera flash
+    if (this.flashTimeRemaining > 0) {
+        this.flashTimeRemaining -= deltaTime
+        const progress = this.flashTimeRemaining / this.flashDuration
+        this.flashAlpha = progress  // Fade ut flasken
+    } else {
+        this.flashAlpha = 0
+    }
+    
+    // Hantera fade
+    if (this.fadeTimeRemaining > 0) {
+        this.fadeTimeRemaining -= deltaTime
+        const progress = 1 - (this.fadeTimeRemaining / this.fadeDuration)
+        this.fadeAlpha = this.fadeStartAlpha + (this.fadeTargetAlpha - this.fadeStartAlpha) * progress
+    }
+}
+
+// I Game.js draw(), rita flash och fade EFTER allt annat
+draw(ctx) {
+    // ... rita alla objekt med kamera ...
+    
+    // Rita camera flash
+    if (this.camera.flashAlpha > 0) {
+        ctx.save()
+        ctx.globalAlpha = this.camera.flashAlpha
+        ctx.fillStyle = this.camera.flashColor
+        ctx.fillRect(0, 0, this.width, this.height)
+        ctx.restore()
+    }
+    
+    // Rita camera fade
+    if (this.camera.fadeAlpha > 0) {
+        ctx.save()
+        ctx.globalAlpha = this.camera.fadeAlpha
+        ctx.fillStyle = 'black'
+        ctx.fillRect(0, 0, this.width, this.height)
+        ctx.restore()
+    }
+}
+
+// Användning
+// När spelaren tar skada - vit flash
+this.game.camera.flash('white', 200)
+
+// När spelaren dör - fade till svart
+this.game.camera.fade(1, 1000)  // Fade in svart över 1 sekund
+
+// Vid level start - fade från svart
+this.game.camera.fadeAlpha = 1
+this.game.camera.fade(0, 1000)  // Fade ut svart över 1 sekund
+
+// När spelaren samlar power-up - kort gul flash
+this.game.camera.flash('rgba(255, 255, 0, 0.5)', 150)
+```
+
+#### Tips för effekter
+- **Shake** - Använd vid skador, explosioner, kraftfulla slag
+- **Flash** - Använd för snabba visuella bekräftelser (skada, power-ups)
+- **Fade** - Använd för övergångar (level start/end, dödsscreen)
+- Kombinera effekterna för mer impact: `shake + flash` vid explosioner
+
+#### Juice!
+Små visuella effekter som dessa kallas för "game feel" eller "juice" och är avgörande för att göra spelet kännas responsivt och tillfredsställande. Utan dessa känns spelet platt och livlöst, med dem känns varje handling viktig och kraftfull.
+
 ## Testfrågor
 
 1. Vad är skillnaden mellan världskoordinater och skärmkoordinater?

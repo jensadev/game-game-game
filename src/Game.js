@@ -195,6 +195,9 @@ export default class Game {
         if (this.player.x + this.player.width > this.worldWidth) {
             this.player.x = this.worldWidth - this.player.width
         }
+
+
+
         
         // Uppdatera kameran för att följa spelaren
         this.camera.follow(this.player)
