@@ -173,25 +173,19 @@ update(deltaTime) {
 - State-check (`if (this.gameState !== 'PLAYING') return`) **stoppar** all update när ej PLAYING
 - Win/lose conditions kollas **sist** i update
 
-### Draw - Overlay screens:
+### Draw - UI handles overlays:
 ```javascript
 draw(ctx) {
-    // Rita alltid spelvä
-
-rlden (som "frozen" bakgrund)
+    // Rita alltid spelvärlden (som "frozen" bakgrund)
     this.platforms.forEach(platform => platform.draw(ctx))
     this.coins.forEach(coin => coin.draw(ctx))
     this.enemies.forEach(enemy => enemy.draw(ctx))
     this.gameObjects.forEach(obj => obj.draw(ctx))
     this.player.draw(ctx)
-    this.ui.draw(ctx)
     
-    // Rita overlay baserat på state
-    if (this.gameState === 'GAME_OVER') {
-        this.drawGameOver(ctx)
-    } else if (this.gameState === 'WIN') {
-        this.drawWin(ctx)
-    }
+    // Rita UI sist (så det är överst)
+    // UserInterface hanterar både HUD och game state overlays
+    this.ui.draw(ctx)
 }
 ```
 
@@ -200,14 +194,67 @@ rlden (som "frozen" bakgrund)
 - Kontext för varför de dog/vann
 - Mer visuellt tilltalande än svart skärm
 
-## Overlay Screens
+**Separation of Concerns:**
+- `Game.js` sätter `gameState` (logik)
+- `UserInterface.js` renderar baserat på `gameState` (presentation)
+- Detta följer Single Responsibility Principle
 
-### Game Over Screen:
+## UserInterface.js - Hantera ALL UI-rendering
+
+UserInterface-klassen har nu ansvar för all visuell feedback:
+
+### Draw Method - Delegerar till sub-methods:
+```javascript
+draw(ctx) {
+    // Rita HUD (score, health, etc)
+    this.drawHUD(ctx)
+    
+    // Rita game state overlays baserat på game.gameState
+    if (this.game.gameState === 'GAME_OVER') {
+        this.drawGameOver(ctx)
+    } else if (this.game.gameState === 'WIN') {
+        this.drawWin(ctx)
+    }
+}
+```
+
+### HUD (Heads-Up Display):
+```javascript
+drawHUD(ctx) {
+    ctx.save()
+    
+    // Konfigurera text
+    ctx.font = `${this.fontSize}px ${this.fontFamily}`
+    ctx.fillStyle = this.textColor
+    ctx.shadowColor = this.shadowColor
+    ctx.shadowOffsetX = 2
+    ctx.shadowOffsetY = 2
+    ctx.shadowBlur = 3
+    
+    // Rita score, coins, health
+    ctx.fillText(`Score: ${this.game.score}`, 20, 40)
+    ctx.fillText(`Coins: ${this.game.coinsCollected}`, 20, 70)
+    ctx.fillText(`Health: ${this.game.player.health}/${this.game.player.maxHealth}`, 20, 100)
+    
+    // Rita health bars som hjärtan
+    for (let i = 0; i < this.game.player.maxHealth; i++) {
+        const heartX = 20 + i * 30
+        const heartY = 110
+        
+        ctx.fillStyle = i < this.game.player.health ? '#FF0000' : '#333333'
+        ctx.fillRect(heartX, heartY, 20, 20)
+    }
+    
+    ctx.restore()
+}
+```
+
+### Game Over Overlay:
 ```javascript
 drawGameOver(ctx) {
     // Halvgenomskinlig svart bakgrund (dimma)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
-    ctx.fillRect(0, 0, this.width, this.height)
+    ctx.fillRect(0, 0, this.game.width, this.game.height)
     
     // Save/restore för att inte påverka annan rendering
     ctx.save()
@@ -217,28 +264,28 @@ drawGameOver(ctx) {
     ctx.font = 'bold 60px Arial'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText('GAME OVER', this.width / 2, this.height / 2 - 50)
+    ctx.fillText('GAME OVER', this.game.width / 2, this.game.height / 2 - 50)
     
     // Final score
     ctx.fillStyle = '#FFFFFF'
     ctx.font = '30px Arial'
-    ctx.fillText(`Final Score: ${this.score}`, this.width / 2, this.height / 2 + 20)
-    ctx.fillText(`Coins: ${this.coinsCollected}/${this.totalCoins}`, this.width / 2, this.height / 2 + 60)
+    ctx.fillText(`Final Score: ${this.game.score}`, this.game.width / 2, this.game.height / 2 + 20)
+    ctx.fillText(`Coins: ${this.game.coinsCollected}/${this.game.totalCoins}`, this.game.width / 2, this.game.height / 2 + 60)
     
     // Restart instruktion
     ctx.font = '24px Arial'
-    ctx.fillText('Press R to Restart', this.width / 2, this.height / 2 + 120)
+    ctx.fillText('Press R to Restart', this.game.width / 2, this.game.height / 2 + 120)
     
     ctx.restore()
 }
 ```
 
-### Win Screen:
+### Win Overlay:
 ```javascript
 drawWin(ctx) {
     // Halvgenomskinlig grön bakgrund (victory glow)
     ctx.fillStyle = 'rgba(0, 255, 0, 0.3)'
-    ctx.fillRect(0, 0, this.width, this.height)
+    ctx.fillRect(0, 0, this.game.width, this.game.height)
     
     ctx.save()
     
@@ -247,17 +294,17 @@ drawWin(ctx) {
     ctx.font = 'bold 60px Arial'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText('VICTORY!', this.width / 2, this.height / 2 - 50)
+    ctx.fillText('VICTORY!', this.game.width / 2, this.game.height / 2 - 50)
     
     // Success message
     ctx.fillStyle = '#FFFFFF'
     ctx.font = '30px Arial'
-    ctx.fillText('All Coins Collected!', this.width / 2, this.height / 2 + 20)
-    ctx.fillText(`Final Score: ${this.score}`, this.width / 2, this.height / 2 + 60)
+    ctx.fillText('All Coins Collected!', this.game.width / 2, this.game.height / 2 + 20)
+    ctx.fillText(`Final Score: ${this.game.score}`, this.game.width / 2, this.game.height / 2 + 60)
     
     // Restart instruktion
     ctx.font = '24px Arial'
-    ctx.fillText('Press R to Play Again', this.width / 2, this.height / 2 + 120)
+    ctx.fillText('Press R to Play Again', this.game.width / 2, this.game.height / 2 + 120)
     
     ctx.restore()
 }
@@ -267,6 +314,91 @@ drawWin(ctx) {
 - `textAlign: 'center'` - Centrera text horisontellt
 - `textBaseline: 'middle'` - Centrera text vertikalt
 - `ctx.save()/restore()` - Spara/återställ canvas state (font, color, etc)
+
+## Viktig buggfix - deltaTime initialization
+
+**VIKTIGT:** Det finns en kritisk bugg i spelloopen som kan få spelaren att falla igenom världen!
+
+### Problemet
+
+Vid första framen kan `deltaTime` bli **jättestort**:
+- `lastTime` börjar på 0
+- `timeStamp` är tiden sedan sidan laddades (kan vara flera tusen millisekunder)
+- Detta ger `deltaTime = timeStamp - 0` = enormt värde!
+- Spelaren faller 43000+ pixels och hamnar långt under världen
+
+### Lösningen - Två enkla steg
+
+**1. Initiera lastTime korrekt (main.js):**
+```javascript
+const runGame = (timeStamp) => {
+    // Förhindra för stora deltaTime värden (första frame, tab-switch, etc)
+    if (lastTime === 0) {
+        lastTime = timeStamp
+    }
+    const deltaTime = timeStamp - lastTime
+    lastTime = timeStamp
+    
+    // ... rest av koden
+}
+```
+
+**2. Cap deltaTime till max 100ms (main.js):**
+```javascript
+const runGame = (timeStamp) => {
+    // ... lastTime check från ovan
+    
+    // Säkerhets-cap för deltaTime (max 100ms)
+    const cappedDeltaTime = Math.min(deltaTime, 100)
+    
+    // Rensa canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    
+    // Uppdatera och rita med cappedDeltaTime
+    game.update(cappedDeltaTime)
+    game.draw(ctx)
+    
+    // ... rest av koden
+}
+```
+
+### Varför behövs båda?
+
+- **lastTime check**: Förhindrar bug vid första framen
+- **deltaTime cap**: Förhindrar extrema värden vid:
+  - Tab-switch (användaren byter flik och kommer tillbaka)
+  - Långsam restart (spelaren väntar länge i GAME_OVER innan R)
+  - Browser freeze/lag
+
+**Utan dessa fixar:**
+- Spelaren faller genom världen vid start
+- Fiender spawnar felaktigt efter restart
+- Fysiken blir opålitlig vid långa frames
+
+**Komplett implementation:**
+```javascript
+const runGame = (timeStamp) => {
+    // Förhindra för stora deltaTime värden (första frame, tab-switch, etc)
+    if (lastTime === 0) {
+        lastTime = timeStamp
+    }
+    const deltaTime = timeStamp - lastTime
+    lastTime = timeStamp
+    
+    // Säkerhets-cap för deltaTime (max 100ms)
+    const cappedDeltaTime = Math.min(deltaTime, 100)
+    
+    // Rensa canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    
+    // Uppdatera och rita
+    game.update(cappedDeltaTime)
+    game.draw(ctx)
+    
+    // Kör nästa frame
+    gameLoop = requestAnimationFrame(runGame)
+}
+```
 
 ## RGBA Colors - Transparens
 
@@ -518,9 +650,9 @@ Vi har nu implementerat ett komplett game state system!
 5. Varför ritar vi spelvärlden även när `gameState === 'GAME_OVER'`? Varför inte bara svart skärm?
 6. Vad händer om vi glömmer `this.totalCoins = this.coins.length` i init()? Hur påverkar det win condition?
 7. Varför använder vi `ctx.save()` och `ctx.restore()` i drawGameOver/drawWin?
-8. Hur skulle du implementera en "ready, set, go!" countdown innan spelet startar?
-9. Beskriv flödet från att spelaren samlar sista myntet till att win-screen visas. Vilka metoder anropas?
-10. Varför är det viktigt att kolla `&& this.gameState === 'PLAYING'` i win/lose conditions? Vad händer utan den checken?
+8. **[BUGGFIX]** Varför kan `deltaTime` bli jättestort vid första framen? Förklara problemet och de två delarna av lösningen.
+9. **[BUGGFIX]** Varför räcker det med `lastTime === 0` check och deltaTime cap? Varför behövs ingen separat restart-hantering?
+10. Beskriv flödet från att spelaren samlar sista myntet till att win-screen visas. Vilka metoder anropas?
 
 ## Nästa steg
 
