@@ -177,7 +177,7 @@ Rita en text på canvas som visar hur många sekunder spelet har varit igång. A
 Den här koden ska du skriva i `Game.js`. Du behöver dels skapa en variabel för att hålla reda på den förflutna tiden, och sedan uppdatera och rita den varje frame. I `update`-metoden lägger du till så kan du öka `elapsedTime` med `deltaTime` eftersom `deltaTime` är hur många millisekunder som har gått sedan förra uppdateringen.
 
 För att rita ut det behöver du sedan redigera `draw`-metoden för att rita ut text.
-
+v   
 ```javascript
 ctx.fillStyle = 'black';
 ctx.font = '20px Arial';
