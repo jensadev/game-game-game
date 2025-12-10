@@ -17,6 +17,10 @@ export default class Player extends GameObject {
         // Fysik egenskaper
         this.jumpPower = -0.6 // negativ hastighet för att hoppa uppåt
         this.isGrounded = false // om spelaren står på marken
+
+        // dubbelhopp
+        this.jumpCount = 0
+        this.maxJumps = 2
     }
 
     update(deltaTime) {
@@ -33,9 +37,15 @@ export default class Player extends GameObject {
         }
 
         // Hopp - endast om spelaren är på marken
-        if (this.game.inputHandler.keys.has(' ') && this.isGrounded) {
+        if (this.game.inputHandler.keys.has(' ') && this.jumpCount < this.maxJumps) {
             this.velocityY = this.jumpPower
             this.isGrounded = false
+            this.jumpCount++
+            this.game.inputHandler.keys.delete(' ') // förhindra kontinuerligt hopp
+        }
+
+        if (this.isGrounded) {
+            this.jumpCount = 0 // nollställ hopp räknaren när på marken
         }
 
         // Applicera gravitation
