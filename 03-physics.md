@@ -260,6 +260,12 @@ I update
         jumpCount nollställ
 ```
 
+Ett problem med detta är att inputHandlern registrerar tangenten som nedtryckt under flera frames, vilket gör att hopptangenten registreras flera gånger i följd. För att undvika detta kan du ta bort hopp-tangenten från `inputHandler` när hopptangenten har registrerats, så att den inte registreras igen förrän tangenten släpps och trycks ned igen.
+
+```javascript
+this.game.inputHandler.keys.delete(' ') // ta bort space ur keys
+```
+
 ### Dash
 
 En annan rolig mekanik är att låta spelaren göra en snabb rörelse i en riktning, ofta kallad "dash". Detta kan ge spelaren möjlighet att snabbt undvika faror eller nå svåra platser. Detta påminner i stort om mekaniken i att göra ett hopp, men vi flyttar istället spelaren horisontellt med en snabb rörelse.
