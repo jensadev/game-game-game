@@ -35,9 +35,8 @@ export default class GameBase {
         this.camera = new Camera(0, 0, width, height)
         this.camera.setWorldBounds(this.worldWidth, this.worldHeight)
 
-        // Gemensamma object arrays - kan användas av alla speltyper
+        // Gemensamma object arrays - kan användas av de flesta speltyper
         this.enemies = []
-        this.projectiles = []
     }
 
     /**

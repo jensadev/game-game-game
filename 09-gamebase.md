@@ -58,19 +58,19 @@ En abstract class är en klass som inte kan instansieras direkt. Den fungerar so
 GameBase (abstract)
 ├── Properties: width, height, worldWidth (=width, ingen scrolling), score, gameState
 ├── Systems: camera, inputHandler, ui
-├── Arrays: enemies, projectiles
+├── Arrays: enemies
 ├── Abstract: init(), restart(), update(), draw()
 │
 ├── PlatformerGame (plattformsspel)
 │   ├── Extends GameBase
 │   ├── Overrides: worldWidth = width * 3 (för sidoscrolling)
-│   ├── Adds: gravity, friction, platforms, coins
+│   ├── Adds: gravity, friction, platforms, coins, projectiles
 │   └── Implements: init(), restart(), update(), draw()
 │
 └── SpaceShooter (framtida)
     ├── Extends GameBase
     ├── Kan ha egen worldWidth för scrolling
-    ├── Adds: asteroids, powerups, scrolling background
+    ├── Adds: asteroids, powerups, bullets, scrolling background
     └── Implements: init(), restart(), update(), draw()
 ```
 
@@ -103,7 +103,6 @@ Om vi skapar en farming-simulator i framtiden så kanske vi inte behöver `enemi
 - `score` - Poängsystem
 - `inputHandler, ui, camera` - Gemensamma system
 - `enemies[]` - De flesta spel har fiender
-- `projectiles[]` - Gemensam array för projektiler
 
 #### Abstract methods
 
@@ -133,7 +132,7 @@ Nu kan vi komma igång med att refaktorisera `Game.js` till `PlatformerGame.js` 
    - Sätter `worldWidth = 800`, `worldHeight = 600` (default: ingen scrolling)
    - Skapar `inputHandler`, `ui`, `camera`
    - Sätter `score = 0`, `gameState = 'PLAYING'`
-   - Initialiserar `enemies = []`, `projectiles = []`
+   - Initialiserar `enemies = []`
 
 3. **Tillbaka till PlatformerGame constructor**
    - Överskriver `worldWidth = width * 3` (aktiverar sidoscrolling)
@@ -185,13 +184,13 @@ Subklasser "fyller i detaljerna" men följer samma struktur.
 **GameBase ansvarar för:**
 - Gemensamma system (input, UI, camera)
 - Definiera interface (abstrakta metoder)
-- Gemensamma properties (score, gameState, enemies, projectiles)
+- Gemensamma properties (score, gameState, enemies)
 - Default world size (worldWidth = width, ingen scrolling)
 
 **PlatformerGame ansvarar för:**
 - Plattformsspel-specifik logik
 - Överskriva worldWidth för sidoscrolling
-- Skapa och hantera plattformsobjekt (platforms, coins)
+- Skapa och hantera plattformsobjekt (platforms, coins, projectiles)
 - Implementera game loop för plattformsfysik (gravity, friction)
 - Plattformsspel-specifik state (coinsCollected, totalCoins)
 
