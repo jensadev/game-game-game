@@ -36,6 +36,10 @@ export default class PlatformerGame extends GameBase {
         this.coins = []
         this.projectiles = []
         
+        // Background arrays (sätts av levels)
+        this.backgrounds = []
+        this.backgroundObjects = []
+        
         // Initiera spelet
         this.init()
     }
@@ -75,6 +79,10 @@ export default class PlatformerGame extends GameBase {
         this.coins = levelData.coins
         this.enemies = levelData.enemies
         this.totalCoins = this.coins.length
+        
+        // Sätt background data
+        this.backgrounds = levelData.backgrounds
+        this.backgroundObjects = levelData.backgroundObjects
         
         // Återställ mynt-räknare för denna level
         this.coinsCollected = 0
@@ -133,6 +141,9 @@ export default class PlatformerGame extends GameBase {
         
         // Uppdatera bara om spelet är i PLAYING state
         if (this.gameState !== 'PLAYING') return
+        
+        // Uppdatera background objects
+        this.backgroundObjects.forEach(obj => obj.update(deltaTime))
         
         // Uppdatera plattformar (även om de är statiska)
         this.platforms.forEach(platform => platform.update(deltaTime))
@@ -243,6 +254,16 @@ export default class PlatformerGame extends GameBase {
     }
 
     draw(ctx) {
+        // Rita backgrounds FÖRST (längst bak)
+        this.backgrounds.forEach(bg => bg.draw(ctx, this.camera))
+        
+        // Rita background objects
+        this.backgroundObjects.forEach(obj => {
+            if (this.camera.isVisible(obj)) {
+                obj.draw(ctx, this.camera)
+            }
+        })
+        
         // Rita alla plattformar med camera offset
         this.platforms.forEach(platform => {
             if (this.camera.isVisible(platform)) {
