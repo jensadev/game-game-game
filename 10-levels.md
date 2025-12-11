@@ -13,7 +13,7 @@ I detta steg fokuserar vi på:
 
 ## Problemet - Hårdkodad level-design
 
-Just nu ligger all level-design i `PlatformerGame.init()`:
+Just nu ligger all level-design i `PlatformerGame.init()`. Vi skapar allt genom att hårdkoda plattformar, mynt och fiender direkt i init-metoden. Det funkar för att testa, men i ett spel så vill vi separera denna data från spel-logiken.
 
 ```javascript
 init() {
@@ -36,19 +36,15 @@ init() {
 }
 ```
 
-**Problem:**
-- Level-design blandad med game logic
-- Svårt att skapa flera nivåer
-- Svårt att testa olika layouts
-- Kod blir rörig och svår att underhålla
-- Ingen separation mellan "vad" (level data) och "hur" (game mechanics)
-
 ## Lösningen - Level System
 
 Vi skapar ett level-system med:
 1. **Level (abstract)** - Basklass för alla levels
 2. **Level1, Level2, etc** - Konkreta level-implementationer
 3. **Level Management** - Ladda och byta mellan levels i PlatformerGame
+
+Precis som tidigare så försöker vi hitta de gemensamma dragen och abstrahera dem till en basklass som vi sedan kan bygga vidare på. Vad ska ingå i Level-klassen? I nuläget så handlar det om att skapa plattformar, mynt och fiender. Men det låser till visss del Level till just en plattformsspelstyp. Men i det här fallet så är det okej. Vi kan också titta senare på hur vi kan byta ut Level-klassen för att passa andra speltyper. **Allt måste inte alltid vara generellt och återanvändbart.**
+
 
 ### Struktur
 
@@ -74,51 +70,12 @@ PlatformerGame
 
 ### Level.js - Abstract Base Class
 
-Skapa `src/Level.js` som definierar strukturen för alla levels:
-
-```javascript
-export default class Level {
-    constructor(game) {
-        if (new.target === Level) {
-            throw new Error('Level är en abstract class')
-        }
-        
-        this.game = game
-        this.platforms = []
-        this.coins = []
-        this.enemies = []
-        this.playerSpawnX = 50
-        this.playerSpawnY = 50
-    }
-    
-    // Abstract methods - måste implementeras
-    createPlatforms() { throw new Error('..') }
-    createCoins() { throw new Error('..') }
-    createEnemies() { throw new Error('..') }
-    
-    init() {
-        this.createPlatforms()
-        this.createCoins()
-        this.createEnemies()
-    }
-    
-    getData() {
-        return {
-            platforms: this.platforms,
-            coins: this.coins,
-            enemies: this.enemies,
-            playerSpawnX: this.playerSpawnX,
-            playerSpawnY: this.playerSpawnY
-        }
-    }
-}
-```
-
-Se hela implementationen i [src/Level.js](src/Level.js).
+Grunden i systemet är Level-klassen. Koden kan du se i [src/Level.js](src/Level.js).
+Vi kan sedan använda den som bas för alla våra levels.
 
 ### Level1.js - Första nivån
 
-Skapa `src/levels/Level1.js`:
+I `Level1.js` definierar vi plattformar, mynt och fiender för den första nivån. Du känner igen den från spelet sen tidigare.
 
 ```javascript
 import Level from '../Level.js'
@@ -145,17 +102,17 @@ export default class Level1 extends Level {
 }
 ```
 
-Se hela implementationen i [src/levels/Level1.js](src/levels/Level1.js).
-
 ### Level2.js - Andra nivån
 
-Level 2 är svårare - högre plattformar, fler fiender, längre hopp krävs:
+Level 2 är lite annorlunda med nya plattformar, mynt och fiender.
 
 Se implementationen i [src/levels/Level2.js](src/levels/Level2.js).
 
 ### PlatformerGame - Level Management
 
-Uppdatera `PlatformerGame` för att använda levels:
+Vi behöver nu uppdatera `PlatformerGame` för att använda vårt nya level-system. Vi importerar förstå de levels vi skapat och sedan så lägger vi till logik för att ladda och byta mellan levels.
+
+Levels kommer att lagras som klasser i en array, och vi håller reda på vilken level som är aktiv med en index-variabel. När vi byter level så skapar vi en ny instans av den level-klassen och hämtar dess data för att sätta upp spelet.
 
 ```javascript
 import Level1 from './levels/Level1.js'
@@ -220,7 +177,9 @@ export default class PlatformerGame extends GameBase {
 }
 ```
 
-**Viktiga ändringar i `update()`:**
+### Viktiga ändringar i `update()`
+
+I `update()`-metoden i `PlatformerGame` behöver vi ändra hur vi kollar om spelaren har klarat leveln. Istället för att sätta `this.gameState = 'WIN'` direkt när alla mynt är samlade, så anropar vi `this.nextLevel()` för att ladda nästa nivå.
 
 ```javascript
 // När alla mynt är samlade - gå till nästa level
@@ -380,19 +339,8 @@ Subklasser fyller i detaljerna, men ordningen är fix.
 Med detta level-system på plats kan vi enkelt:
 
 1. **Level Selection** - Meny för att välja level
-2. **Level Editor** - Verktyg för att skapa levels visuellt
-3. **Load from JSON** - Spara/ladda levels som JSON-filer
-4. **Procedural Generation** - Generera random levels
-5. **Level Statistics** - Spara bästa tid, high score per level
-6. **Bonus Levels** - Special levels med unika mekaniker
-7. **Boss Levels** - Levels med boss-strider
-
-## Sammanfattning
-
-Level-systemet ger oss:
-- ✅ Separation mellan level-design och game logic
-- ✅ Enkelt att skapa nya levels
-- ✅ Tydlig struktur med abstract class
-- ✅ Level progression (gå till nästa level)
-- ✅ Återanvändbart system för framtida features
-- ✅ Renare och mer underhållbar kod
+2. **Load from JSON** - Spara/ladda levels som JSON-filer
+3. **Procedural Generation** - Generera random levels
+4. **Level Statistics** - Spara bästa tid, high score per level
+5. **Bonus Levels** - Special levels med unika mekaniker
+6. **Boss Levels** - Levels med boss-strider
