@@ -18,11 +18,7 @@ export default class Enemy extends GameObject {
         this.direction = 1 // 1 = höger, -1 = vänster
         
         this.damage = 1 // Hur mycket skada fienden gör
-        
-        // Sprite animation system
-        this.loadSprite('idle', idleSprite, 11, 150)
-        this.loadSprite('run', runSprite, 12, 100)
-        this.currentAnimation = 'idle'
+
     }
 
     update(deltaTime) {
