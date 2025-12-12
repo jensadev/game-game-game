@@ -8,20 +8,21 @@ import Camera from './Camera.js'
  * Subklasser (t.ex. PlatformerGame, SpaceShooterGame) implementerar specifik logik
  */
 export default class GameBase {
-    constructor(width, height) {
+    constructor(canvas) {
         // Förhindra direkt instansiering av GameBase
         if (new.target === GameBase) {
             throw new Error('GameBase är en abstract class och kan inte instansieras direkt')
         }
 
         // Canvas dimensioner
-        this.width = width
-        this.height = height
+        this.canvas = canvas
+        this.width = canvas.width
+        this.height = canvas.height
         
         // World size - kan överskridas av subklasser
         // Default: samma som canvas (ingen scrolling)
-        this.worldWidth = width
-        this.worldHeight = height
+        this.worldWidth = this.width
+        this.worldHeight = this.height
 
         // Gemensam game state
         this.gameState = 'MENU' // MENU, PLAYING, GAME_OVER, WIN
@@ -33,7 +34,7 @@ export default class GameBase {
         this.ui = new UserInterface(this)
         
         // Camera - alla spel kan ha en kamera (även om den inte scrollar)
-        this.camera = new Camera(0, 0, width, height)
+        this.camera = new Camera(0, 0, this.width, this.height)
         this.camera.setWorldBounds(this.worldWidth, this.worldHeight)
 
         // Gemensamma object arrays - kan användas av de flesta speltyper
