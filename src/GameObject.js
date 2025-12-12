@@ -21,6 +21,20 @@ export default class GameObject {
         // Gör inget, implementera i subklasser
     }
 
+    // Rita debug-information (hitbox)
+    drawDebug(ctx, camera = null) {
+        const screenX = camera ? this.x - camera.x : this.x
+        const screenY = camera ? this.y - camera.y : this.y
+        
+        ctx.strokeStyle = 'lime'
+        ctx.lineWidth = 2
+        ctx.strokeRect(screenX, screenY, this.width, this.height)
+        
+        // Rita en punkt i centrum
+        ctx.fillStyle = 'red'
+        ctx.fillRect(screenX + this.width / 2 - 2, screenY + this.height / 2 - 2, 4, 4)
+    }
+
     // Kolla om detta objekt kolliderar med ett annat
     // AABB kollision - funkar för rektanglar
     intersects(other) {
