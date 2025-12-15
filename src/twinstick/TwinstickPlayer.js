@@ -224,6 +224,16 @@ export default class TwinstickPlayer extends GameObject {
     }
 
     draw(ctx, camera) {
+        // Blinka när spelaren dashar (varannan 100ms)
+        if (this.isDashing) {
+            const blinkInterval = 100 // Millisekunder mellan blink
+            const shouldShow = Math.floor(this.dashTimer / blinkInterval) % 2 === 0
+            if (!shouldShow) {
+                // Rita inte spelaren denna frame
+                return
+            }
+        }
+        
         const screenX = camera ? this.x - camera.x : this.x
         const screenY = camera ? this.y - camera.y : this.y
         const spriteDrawn = this.drawSprite(ctx, camera, this.lastDirectionX === -1)

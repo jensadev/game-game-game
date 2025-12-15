@@ -74,6 +74,9 @@ export default class TwinstickGame extends GameBase {
         this.projectiles.forEach(projectile => {
             projectile.draw(ctx, this.camera)
         })
+        
+        // Rita UI (health, ammo, score)
+        this.ui.draw(ctx)
     }
     
     // Rita ett 32x32 grid i världen
