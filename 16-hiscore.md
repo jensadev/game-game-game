@@ -1,0 +1,3 @@
+# Hiscore Documentation
+
+...existing code...
