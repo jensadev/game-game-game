@@ -154,3 +154,11 @@ git checkout 01-player
 ```
 
 Öppna sedan filen [Steg 1 - Player](01-player.md) för att fortsätta!
+
+### All dokumentation
+
+All dokumentation för spelet finns i `docs/`-mappen. Varje steg i guiden har sin egen markdown-fil som förklarar koncepten och koden i detalj. Det kan vara så att filerna inte är den senaste eller refererar till kod, byt då till rätt branch för att se koden som hör till dokumentationen.
+
+```bash
+git checkout <branch-name>
+```
