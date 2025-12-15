@@ -46,37 +46,17 @@ I det här projektet så använder vi import och export för att hantera moduler
 
 ## Förklaring av koden
 
-Varje del i projektet har sin egen roll och ansvar. När vi startar spelet så fungerar det genom att de olika filerna samarbetar.
-
-1. `index.html` laddar `main.js`.
-2. `main.js` skapar en instans av `Game`-klassen och startar spelloopen.
-3. `main.js` använder `requestAnimationFrame` för att skapa en loop som uppdaterar och renderar spelet varje frame med `game.update(deltaTime)` och `game.draw(ctx)`.
-4. `Game.js` hanterar spelets logik, uppdateringar och rendering av spelobjekt.
-5. `InputHandler.js` lyssnar på tangentbordsinput och sparar statusen för nedtryckta tangenter.
-6. `GameObject.js` är bas-klassen för alla spelobjekt, och `Rectangle.js` är en specifik implementation av ett spelobjekt.
-
 ### main.js
 
 Denna fil startar spelet genom att skapa en instans av `Game`-klassen och initiera spelloopen. Det är alltså setup-koden för spelet.
 
-main.js importerar `Game`-klassen och skapar en ny spelinstans. Den använder `requestAnimationFrame` för att skapa en loop som uppdaterar och renderar spelet varje frame. Det vill säga den kallar på `game.update(deltaTime)` och `game.render(ctx)` varje gång webbläsaren är redo att rita en ny frame.
-
 ### Game.js
 
 Denna fil innehåller `Game`-klassen som är hjärtat i spelmotorn. Den hanterar:
-- Skapandet av spelobjekt i konstruktorn.
-- Uppdateringsloopen som körs varje frame med `update(deltaTime)`-metoden. Denna metod uppdaterar alla spelobjekt genom att anropa deras egna `update(deltaTime)`-metoder.
-- Rendering av spelobjekt på canvas med `draw(ctx)`-metoden. Denna metod ritar alla spelobjekt genom att anropa deras egna `draw(ctx)`-metoder.
-- Hantering av användarinput via `InputHandler`-klassen. `InputHandler` lyssnar efter tangentbordsinput och sparar statusen för nedtryckta tangenter i en `Set`. Enskilda spelobjekt kan sedan kolla denna `Set` för att se om en viss tangent är nedtryckt och agera därefter.
-
-Game.js roll är alltså att koordinera alla delar av spelet och se till att allt fungerar tillsammans.
-
-För att uppdatera och rita spelobjekt så itererar `Game`-klassen genom en lista av `gameObjects` och anropar deras respektive metoder. Detta sker i `update` och `draw` metoderna:
-
-```
-För varje objekt i gameObjects:
-    anropa objektets update(deltaTime) eller draw(ctx)
-```
+- Skapandet av spelobjekt.
+- Uppdateringsloopen som körs varje frame.
+- Rendering av spelobjekt på canvas.
+- Hantering av användarinput via `InputHandler`-klassen.
 
 ### InputHandler.js
 
@@ -90,36 +70,11 @@ I exemplet kan du använda tangenterna 'r' och 'b' för att sätta fart på rekt
 
 Denna fil innehåller bas-klass för alla spelobjekt. Den definierar grundläggande egenskaper som position, storlek och metoder för uppdatering och rendering. Alla specifika spelobjekt (som rektanglar) kommer att ärva från denna klass.
 
-`GameObject`-klassen kommer aldrig att instansieras direkt, utan fungerar som en mall för andra spelobjekt (abstrakt). När vi använder den sedan så gör vi det genom att skapa subklasser som `Rectangle` som ärver från `GameObject`.
-Syntax för att ärva från en klass i JavaScript ser ut så här:
-
-```javascript
-import GameObject from './GameObject.js'
-
-export default class Rectangle extends GameObject {
-    constructor(x, y, width, height, color) {
-        super(x, y, width, height) // Anropa basklassens konstruktor
-    }
-}
-```
-
-Vi använder `super()` för att anropa basklassens konstruktor och skicka vidare nödvändiga parametrar.
-
-`GameObject`-klassen definierar två metoder som måste implementeras av alla subklasser:
-- `update(deltaTime)`: Metoden för att uppdatera objektets logik varje frame.
-- `draw(ctx)`: Metoden för att rita objektet på canvas.
-
-Det är viktigt att du följer det här mönstret för spelmotorn kommer att kalla dessa metoder på varje spelobjekt i `Game.js`. Om de saknas så kommer spelet att krascha med felmeddelandet att metoden inte är definierad.
-
 #### Rectangle.js
 
-Denna fil innehåller en specifik implementation av ett spelobjekt, nämligen en rektangel. Den ärver från `GameObject`-klassen och implementerar egna metoder för att rita sig själv på canvas och uppdatera.
-
-I exemplet skapas två rektanglar med olika färger och positioner som rör sig när tangenterna 'r' och 'b' trycks ned.
+Denna fil innehåller en specifik implementation av ett spelobjekt, nämligen en rektangel. Den ärver från `GameObject`-klassen och implementerar egna metoder för att rita sig själv på canvas.
 
 ## Uppgifter
-
-I det här första steget så kommer vi titta på några uppgifter du kan göra för att förstå hur spelmotorn fungerar och för att experimentera med den.
 
 ### Rita något med rektanglar!
 
@@ -127,56 +82,21 @@ Använd Rectangle-klassen för att skapa något med rektanglar. Det kan vara ett
 
 Du kan styra canvasets bakgrundsfärg genom att ändra `style.css`-filen.
 
-```css
-canvas {
-    background-color: lightblue;
-}
-```
-
-För att skapa nya rektanglar, lägg till dem i `Game.js`-konstruktorn:
-
-```javascript
-this.gameObjects.push(new Rectangle(50, 50, 100, 100, 'green'));
-this.gameObjects.push(new Rectangle(200, 150, 150, 75, 'brown'));
-```
-
-#### Flytta de nya rektanglarna
-
-Om du vill så kan du duplicera koden för att flytta rektanglarna i `update`-metoden i `Game.js`, precis som de befintliga rektanglarna.
-Du kan också göra så att vi kan starta alla rektanglars rörelse med en och samma tangent genom att lägga till en loop som går igenom alla `gameObjects` och ökar deras `velocityX` när en viss tangent är nedtryckt.
-
 ### En ny form
 
 Skapa en ny klass som ärver från GameObject, till exempel en cirkel eller en triangel. Implementera dess egna render-metod för att rita den på canvas. Lägg sedan till några instanser av denna nya klass i spelet och se hur de beter sig tillsammans med rektanglarna.
 
-En Circle klass ärver från GameObject och du behöver sedan skapa en egen render-metod för att rita cirkeln.
+För att rita cirklar på canvas så behöver du använda `arc`-metoden.
 
 ```javascript
-import GameObject from './GameObject.js'
-
-export default class Circle extends GameObject {
-    constructor(x, y, radius, color) {
-        super(x, y, radius * 2, radius * 2) // Använd diameter för bredd och höjd
-        this.radius = radius
-        this.color = color
-    }
-
-    draw(ctx) {
-        ctx.fillStyle = this.color
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
-        ctx.fill()
-    }
-}
+ctx.beginPath();
+ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+ctx.fill();
 ```
 
 ### Visa tid
 
 Rita en text på canvas som visar hur många sekunder spelet har varit igång. Använd `fillText`-metoden på canvas-kontexten för att rita text.
-
-Den här koden ska du skriva i `Game.js`. Du behöver dels skapa en variabel för att hålla reda på den förflutna tiden, och sedan uppdatera och rita den varje frame. I `update`-metoden lägger du till så kan du öka `elapsedTime` med `deltaTime` eftersom `deltaTime` är hur många millisekunder som har gått sedan förra uppdateringen.
-
-För att rita ut det behöver du sedan redigera `draw`-metoden för att rita ut text.
 
 ```javascript
 ctx.fillStyle = 'black';
@@ -217,9 +137,17 @@ Det här repot ger en grundläggande struktur för att skapa 2D-spel med JavaScr
 
 ## Nästa steg
 
-Denna tutorial är uppdelad i steg som följer en logisk progression. Varje steg har sin egen git-branch (t.ex. `01-player`, `02-collision`, etc.) där koden för det steget finns implementerad.
+Denna tutorial är uppdelad i steg som följer en logisk progression. Varje steg bygger på det föregående:
 
-När du har jobbat klart med materialet i det här steget, byt till nästa branch för att fortsätta till nästa del i guiden. Du kan antingen använda git-kommandon i terminalen eller klicka på branch-namnet längst ned till vänster i VSCode för att byta branch.
+1. **[Player](01-player.md)** - Skapa en spelarklass med input och rörelse
+2. **[Collision](02-collision.md)** - AABB-kollisionsdetektering
+3. **[Physics](03-physics.md)** - Gravitation, hopp och plattformar
+4. **[Collectibles](04-collectibles.md)** - Mynt, score och UI
+5. **[Enemies](05-enemies.md)** - Fiender, health och damage
+
+Varje steg har sin egen git-branch (t.ex. `01-player`, `02-collision`, etc.) där koden för det steget finns implementerad.
+
+När du har jobbat klart med materialet i det här steget, byt till nästa branch för att fortsätta till nästa del i guiden.
 
 ```bash
 git checkout 01-player
