@@ -28,6 +28,12 @@ export default class EnemySpawner {
         this.waveDelay = 5000  // 5 sekunder mellan waves
         this.waveDelayTimer = 0
         
+        // Countdown display
+        this.countdownActive = false
+        this.countdownTimer = 0
+        this.countdownDuration = 3000 // 3 sekunder countdown
+        this.countdownWaveNumber = 0
+        
         // Wave state
         this.currentWaveEnemies = []
     }
@@ -49,6 +55,16 @@ export default class EnemySpawner {
             return
         }
         
+        // Starta countdown
+        this.countdownActive = true
+        this.countdownTimer = this.countdownDuration
+        this.countdownWaveNumber = this.currentWave + 1
+    }
+    
+    /**
+     * Startar wave efter countdown
+     */
+    beginWave() {
         const wave = this.waves[this.currentWave]
         console.log(`Wave ${this.currentWave + 1} börjar! ${wave.enemies.length} fiender`)
         
@@ -57,6 +73,7 @@ export default class EnemySpawner {
         this.enemiesInWave = wave.enemies.length
         this.enemiesKilled = 0
         this.spawnTimer = 0
+        this.countdownActive = false
     }
     
     /**
@@ -162,6 +179,15 @@ export default class EnemySpawner {
      * Uppdaterar spawner logik
      */
     update(deltaTime) {
+        // Hantera countdown
+        if (this.countdownActive) {
+            this.countdownTimer -= deltaTime
+            if (this.countdownTimer <= 0) {
+                this.beginWave()
+            }
+            return
+        }
+        
         // Om vi väntar mellan waves
         if (!this.waveInProgress && this.waveDelayTimer > 0) {
             this.waveDelayTimer -= deltaTime
@@ -200,34 +226,32 @@ export default class EnemySpawner {
     }
     
     /**
-     * Rita spawner debug info
+     * Rita spawner info
      */
     draw(ctx, camera) {
-        // Rita wave info mitt i skärmen (alltid synlig)
-        ctx.save()
-        ctx.fillStyle = 'white'
-        ctx.font = '24px Arial'
-        ctx.textAlign = 'center'
-        ctx.shadowColor = '#000000'
-        ctx.shadowOffsetX = 2
-        ctx.shadowOffsetY = 2
-        ctx.shadowBlur = 4
-        
-        if (this.waveInProgress) {
-            ctx.fillText(
-                `Wave ${this.currentWave + 1} - ${this.enemiesKilled}/${this.enemiesInWave} killed`,
-                this.game.width / 2,
-                40
-            )
-        } else if (this.waveDelayTimer > 0) {
-            ctx.fillText(
-                `Next wave in ${Math.ceil(this.waveDelayTimer / 1000)}s`,
-                this.game.width / 2,
-                40
-            )
+        // Rita countdown i mitten av skärmen
+        if (this.countdownActive) {
+            const countdown = Math.ceil(this.countdownTimer / 1000)
+            
+            ctx.save()
+            ctx.fillStyle = 'white'
+            ctx.font = 'bold 72px Arial'
+            ctx.textAlign = 'center'
+            ctx.shadowColor = '#000000'
+            ctx.shadowOffsetX = 4
+            ctx.shadowOffsetY = 4
+            ctx.shadowBlur = 8
+            
+            // Visa nummer eller "Wave X starts"
+            if (countdown > 0) {
+                ctx.fillText(countdown, this.game.width / 2, this.game.height / 2)
+            } else {
+                ctx.font = 'bold 48px Arial'
+                ctx.fillText(`Wave ${this.countdownWaveNumber} starts!`, this.game.width / 2, this.game.height / 2)
+            }
+            
+            ctx.restore()
         }
-        
-        ctx.restore()
         
         // Rita spawn points bara i debug-läge
         if (!this.game.inputHandler.debugMode) return
