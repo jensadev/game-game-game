@@ -83,7 +83,13 @@ export default class TwinstickGame extends GameBase {
         // Uppdatera alla projektiler
         this.projectiles.forEach(projectile => {
             projectile.update(deltaTime)
-            // Projektiler tar bort sig själva via maxDistance i Projectile.update()
+            
+            // Kolla kollision mellan projektiler och väggar
+            arenaData.walls.forEach(wall => {
+                if (projectile.intersects(wall)) {
+                    projectile.markedForDeletion = true
+                }
+            })
         })
         
         // Ta bort markerade projektiler
