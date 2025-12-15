@@ -14,12 +14,16 @@ export default class TwinstickPlayer extends GameObject {
         this.directionX = 0
         this.directionY = 0
 
+        // ===== DESIGN: Flag-based state system =====
+        // isDashing, isReloading = mutually exclusive actions
+        // invulnerable = status effect (via isInvulnerable getter)
+        // Timers hanteras via GameObject.updateTimer() för konsistens
+        
         // Health system
         this.maxHealth = 5
         this.health = this.maxHealth
-        this.invulnerable = false // Immun mot skada efter att har blivit träffad
         this.invulnerableTimer = 0
-        this.invulnerableDuration = 1000 // 1 sekund i millisekunder
+        this.invulnerableDuration = 1000
         
         // Shooting system
         this.shootCooldown = 0
@@ -50,17 +54,21 @@ export default class TwinstickPlayer extends GameObject {
         // this.loadSprite('idle', idleSprite, frameCount, frameInterval)
         // this.loadSprite('walk', walkSprite, frameCount, frameInterval)
         this.currentAnimation = 'idle'
-
+    }
+    
+    /**
+     * Derived property: Spelaren är invulnerable under dash ELLER efter skada
+     */
+    get isInvulnerable() {
+        return this.isDashing || this.invulnerableTimer > 0
     }
 
     update(deltaTime) {
-        // Hantera dash
+        // Hantera dash med updateTimer
         if (this.isDashing) {
-            this.dashTimer -= deltaTime
-            if (this.dashTimer <= 0) {
+            if (this.updateTimer('dashTimer', deltaTime)) {
                 this.isDashing = false
             }
-            // Under dash, rör sig i dashens riktning
             this.x += this.dashDirectionX * this.dashSpeed * deltaTime
             this.y += this.dashDirectionY * this.dashSpeed * deltaTime
         } else {
@@ -112,14 +120,14 @@ export default class TwinstickPlayer extends GameObject {
         // Uppdatera animation frame
         this.updateAnimation(deltaTime)
         
-        // Hantera cooldowns (använder GameObject.updateCooldown())
-        this.updateCooldown('shootCooldown', deltaTime)
-        this.updateCooldown('dashCooldown', deltaTime)
+        // Uppdatera alla timers med GameObject.updateTimer()
+        this.updateTimer('shootCooldown', deltaTime)
+        this.updateTimer('dashCooldown', deltaTime)
+        this.updateTimer('invulnerableTimer', deltaTime)
         
         // Hantera reload
         if (this.isReloading) {
-            this.reloadTimer -= deltaTime
-            if (this.reloadTimer <= 0) {
+            if (this.updateTimer('reloadTimer', deltaTime)) {
                 this.finishReload()
             }
         }
@@ -139,10 +147,9 @@ export default class TwinstickPlayer extends GameObject {
             this.startReload()
         }
         
-        // Skjut när vänster musknapp är nedtryckt (inte under dash eller reload)
         if (!this.isDashing && !this.isReloading && this.game.inputHandler.mouseButtons.has(0) && this.shootCooldown <= 0 && this.currentAmmo > 0) {
             this.shoot()
-            this.startCooldown('shootCooldown', this.shootCooldownDuration)
+            this.startTimer('shootCooldown', this.shootCooldownDuration)
         }
     }
     
@@ -164,17 +171,14 @@ export default class TwinstickPlayer extends GameObject {
         
         // Aktivera dash
         this.isDashing = true
-        this.dashTimer = this.dashDuration
-        this.startCooldown('dashCooldown', this.dashCooldownDuration)
-        
-        // Invulnerabilitet under dash
-        this.invulnerable = true
-        this.invulnerableTimer = this.dashDuration
+        this.startTimer('dashTimer', this.dashDuration)
+        this.startTimer('dashCooldown', this.dashCooldownDuration)
+        // Note: invulnerability hanteras via isInvulnerable getter (isDashing === true)
     }
     
     startReload() {
         this.isReloading = true
-        this.reloadTimer = this.reloadDuration
+        this.startTimer('reloadTimer', this.reloadDuration)
         console.log('Reloading...')
     }
     
@@ -216,16 +220,23 @@ export default class TwinstickPlayer extends GameObject {
         // Minska ammo
         this.currentAmmo--
     }
+    
+    takeDamage(amount) {
+        if (this.isInvulnerable) return
+        
+        this.health -= amount
+        if (this.health < 0) this.health = 0
+        
+        this.startTimer('invulnerableTimer', this.invulnerableDuration)
+        console.log(`Player took ${amount} damage! Health: ${this.health}/${this.maxHealth}`)
+    }
 
     draw(ctx, camera) {
-        // Blinka när spelaren dashar (varannan 100ms)
-        if (this.isDashing) {
-            const blinkInterval = 100 // Millisekunder mellan blink
-            const shouldShow = Math.floor(this.dashTimer / blinkInterval) % 2 === 0
-            if (!shouldShow) {
-                // Rita inte spelaren denna frame
-                return
-            }
+        // Blinka när invulnerable (dash eller damage)
+        if (this.isInvulnerable) {
+            const blinkInterval = 100
+            const timer = this.invulnerableTimer > 0 ? this.invulnerableTimer : this.dashTimer
+            if (Math.floor(timer / blinkInterval) % 2 === 0) return
         }
         
         const screenX = camera ? this.x - camera.x : this.x

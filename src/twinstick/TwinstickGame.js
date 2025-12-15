@@ -2,6 +2,7 @@ import GameBase from "../GameBase.js"
 import TwinstickPlayer from "./TwinstickPlayer.js"
 import Projectile from "../Projectile.js"
 import TwinstickArena from "./TwinstickArena.js"
+import TwinstickEnemy from "./TwinstickEnemy.js"
 
 export default class TwinstickGame extends GameBase {
     constructor(canvas) {
@@ -17,6 +18,7 @@ export default class TwinstickGame extends GameBase {
         this.npcs = []
         this.items = []
         this.projectiles = []
+        this.enemyProjectiles = []
         this.arena = null
 
         this.init()
@@ -42,6 +44,16 @@ export default class TwinstickGame extends GameBase {
         this.camera.y = 0
         this.camera.targetX = 0
         this.camera.targetY = 0
+        
+        // Skapa några fiender
+        this.spawnEnemy(200, 200)
+        this.spawnEnemy(this.worldWidth - 250, 200)
+        this.spawnEnemy(this.worldWidth / 2, this.worldHeight - 200)
+    }
+    
+    spawnEnemy(x, y) {
+        const enemy = new TwinstickEnemy(this, x, y, 32, 32)
+        this.enemies.push(enemy)
     }
 
     restart() {
@@ -56,6 +68,16 @@ export default class TwinstickGame extends GameBase {
         projectile.width = 8
         projectile.height = 8
         this.projectiles.push(projectile)
+    }
+    
+    addEnemyProjectile(x, y, directionX, directionY) {
+        // Skapa fiendens projektil
+        const projectile = new Projectile(this, x, y, directionX, directionY)
+        projectile.speed = 0.3 // Mycket långsammare än spelarens projektiler
+        projectile.color = 'red'
+        projectile.width = 8
+        projectile.height = 8
+        this.enemyProjectiles.push(projectile)
     }
 
     update(deltaTime) {
@@ -94,6 +116,62 @@ export default class TwinstickGame extends GameBase {
         
         // Ta bort markerade projektiler
         this.projectiles = this.projectiles.filter(p => !p.markedForDeletion)
+        
+        // Uppdatera fiender
+        this.enemies.forEach(enemy => {
+            const enemyPrevX = enemy.x
+            const enemyPrevY = enemy.y
+            
+            enemy.update(deltaTime)
+            
+            // Kolla kollision mellan fiender och väggar
+            arenaData.walls.forEach(wall => {
+                const collision = enemy.getCollisionData(wall)
+                if (collision) {
+                    if (collision.direction === 'left' || collision.direction === 'right') {
+                        enemy.x = enemyPrevX
+                    }
+                    if (collision.direction === 'top' || collision.direction === 'bottom') {
+                        enemy.y = enemyPrevY
+                    }
+                }
+            })
+        })
+        
+        // Uppdatera fiendens projektiler
+        this.enemyProjectiles.forEach(projectile => {
+            projectile.update(deltaTime)
+            
+            // Kolla kollision med väggar
+            arenaData.walls.forEach(wall => {
+                if (projectile.intersects(wall)) {
+                    projectile.markedForDeletion = true
+                }
+            })
+            
+            if (projectile.intersects(this.player)) {
+                if (!this.player.isInvulnerable) {
+                    this.player.takeDamage(1)
+                }
+                projectile.markedForDeletion = true
+            }
+        })
+        
+        // Kolla kollision mellan spelarens projektiler och fiender
+        this.projectiles.forEach(projectile => {
+            this.enemies.forEach(enemy => {
+                if (projectile.intersects(enemy)) {
+                    enemy.takeDamage(1)
+                    projectile.markedForDeletion = true
+                }
+            })
+        })
+        
+        // Ta bort markerade fiendens projektiler
+        this.enemyProjectiles = this.enemyProjectiles.filter(p => !p.markedForDeletion)
+        
+        // Ta bort döda fiender
+        this.enemies = this.enemies.filter(e => !e.markedForDeletion)
 
         this.camera.follow(this.player)
         this.camera.update(deltaTime)
@@ -111,8 +189,18 @@ export default class TwinstickGame extends GameBase {
         // Rita spelvärlden och objekt
         this.player.draw(ctx, this.camera)
         
+        // Rita fiender
+        this.enemies.forEach(enemy => {
+            enemy.draw(ctx, this.camera)
+        })
+        
         // Rita alla projektiler
         this.projectiles.forEach(projectile => {
+            projectile.draw(ctx, this.camera)
+        })
+        
+        // Rita fiendens projektiler
+        this.enemyProjectiles.forEach(projectile => {
             projectile.draw(ctx, this.camera)
         })
         
