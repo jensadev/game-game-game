@@ -106,6 +106,8 @@ I slutet av `draw`-metoden så ritar vi även en mun som ett streck. Detta gör 
 
 Detta ger spelaren ett enkelt ansikte med ögon och mun, vilket gör den mer levande och karaktärsfull.
 
+> 🎮 Tycker du att grönt är tråkigt? Testa att ändra färgen på spelaren genom att skicka in en annan färg när du skapar spelarobjektet i `main.js`, till exempel `new Player(this, 50, 50, 50, 50, "blue")`.
+
 ## Uppgifter
 
 ### Glad och ledsen mun

@@ -41,6 +41,8 @@ Nu vill vi lägga till fiender som behöver samma platform collision-logik som P
 - **Flexibilitet**: Enemy vänder vid vägg, Player stannar, Boss kan studsa
 - **Skalbarhet**: Nya objekttyper utan att röra Game.js
 
+> 🧠 Metoden vi valde (Lösning 3) kallas för **Strategy Pattern** eller **Component Pattern** i större motorer. Om vi hade 100 olika fiendetyper, varför hade Lösning 1 (Arv) blivit rörig? (Svar: Tänk på om en fiende både ska kunna flyga och simma...).
+
 ## Översikt - Vad ska vi bygga?
 
 För att skapa ett enemy-system behöver vi:
