@@ -197,12 +197,16 @@ this.coins.forEach(coin => {
 })
 ```
 
+> 🎮 Men vem säger att vi bara får score av ett mynt, det kanske helar spelaren eller ökar hens hastighet? Vad kan du komma på för temporära buffar. På samma sätt så kanske vi får en slumpad debuff av att krocka med fiender?
+
 När vi väl har markerat mynt för borttagning så tar vi bort dem i ett separat steg.
 
 ```javascript
 // Ta bort alla objekt markerade för borttagning
 this.coins = this.coins.filter(coin => !coin.markedForDeletion)
 ```
+
+> Tänk på markedForDeletion = true som att du sätter en "Släng mig"-lapp på ett objekt. Spelet slänger inte objektet direkt (det vore farligt mitt i en frame!). Istället går sopbilen (filter-metoden) runt i slutet av varje runda och plockar upp allt som har en lapp på sig.
 
 Vad är då `array.filter()`? Det är en inbyggd JavaScript-metod som skapar en ny array med alla element som uppfyller ett visst villkor. I detta fall behåller vi bara de mynt som **inte** är markerade för borttagning.
 Funktionen itererar över varje element i arrayen och inkluderar det i den nya arrayen om villkoret (`!coin.markedForDeletion`) är sant. Det gör att vi inte ändrar den ursprungliga arrayen medan vi itererar över den, vilket undviker potentiella buggar (fundera på vad som händer om vi iterar med index och tar bort element med index platser samtidigt).

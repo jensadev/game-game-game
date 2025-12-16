@@ -2,6 +2,8 @@
 
 Vi lägger till fiender med enkel AI och ett health-system för spelaren. Men det viktigaste är att vi står inför ett **arkitekturproblem** som kräver **refaktorisering**.
 
+> 🛟 En del av det här kapitlet handlar om struktur och att städa upp vår kod. Kom ihåg att du inte nödvändigtvis måste koda allt, i repot hittar du koden och du kan läsa och ändra säkert, backup finns!
+
 ## Vad lär vi oss?
 
 I detta steg fokuserar vi på:
@@ -41,7 +43,7 @@ Nu vill vi lägga till fiender som behöver samma platform collision-logik som P
 - **Flexibilitet**: Enemy vänder vid vägg, Player stannar, Boss kan studsa
 - **Skalbarhet**: Nya objekttyper utan att röra Game.js
 
-> 🧠 Metoden vi valde (Lösning 3) kallas för **Strategy Pattern** eller **Component Pattern** i större motorer. Om vi hade 100 olika fiendetyper, varför hade Lösning 1 (Arv) blivit rörig? (Svar: Tänk på om en fiende både ska kunna flyga och simma...).
+> 🧠 **Composition over Inheritance** Vi valde att flytta logiken till klasserna (Lösning 3). I moderna spelmotorer (ECS) går man steget längre och bryter ut logiken helt från objekten till separata system (t.ex. ett PhysicsSystem som flyttar alla saker som har en Body). Det vi gör nu är ett steg på vägen dit!
 
 ## Översikt - Vad ska vi bygga?
 
@@ -278,6 +280,8 @@ update(deltaTime) {
 ```
 
 **Resultat:** Game.js från 100+ rader till ~30 rader collision-kod. Varje klass äger sin egen response-logik.
+
+> 🎮 Om du inte redan gjort det så gör fienden farlig! Kan du göra så att fienden blir rödare ju närmare spelaren den är? (Tips: Använd Math.abs(player.x - enemy.x) för att räkna ut avståndet).
 
 ## Testa spelet
 
