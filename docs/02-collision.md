@@ -14,9 +14,8 @@ I detta steg fokuserar vi på:
 
 För att implementera kollisioner behöver vi:
 1. **intersects() metod** - Enkel ja/nej-kontroll av överlapp
-2. **getCollisionData() metod** - Detaljerad info om riktning och överlapp
-3. **Kollisionskontroll i Game.js** - Game organiserar kontrollen
-4. **Separation av Player** - Lagra spelaren separat från gameObjects
+2. **Kollisionskontroll i Game.js** - Game organiserar kontrollen
+3. **Separation av Player** - Lagra spelaren separat från gameObjects
 
 ## Förutsättningar
 
@@ -28,6 +27,8 @@ Innan du börjar med kollisioner bör du ha:
 ## Vad är AABB-kollision?
 
 AABB står för **Axis-Aligned Bounding Box** - det är den enklaste och snabbaste formen av kollisionsdetektering för rektanglar.
+
+> 🛟 Ibland kan det hjälpa att se hitboxes runt spelare och fiender. I draw metoden kan du lägga till `ctx.strokeStyle = 'red' ctx.strokeRect(this.x, this.y, this.width, this.height)` för att rita en röd ram runt objektet. Nu kan du se exakt hur stort objektet är.
 
 ### Hur fungerar det?
 

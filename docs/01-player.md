@@ -40,6 +40,8 @@ Konstruktorn tar emot `game`-instansen samt position och storlek för spelaren. 
 
 Vi sätter egenskaper för färg, hastighet och riktning - ett standardmönster för spelobjekt. Notera standardparametern `color = "green"` som gör att vi kan skapa en grön spelare utan att ange färg explicit.
 
+> 🎮 Om det går för sakta, så vad hindrar dig från att köra så fort du vill? Hur högt kan du sätta `moveSpeed` innan karaktären buggar ut ur väggen eller inte går att styra?
+
 ## Uppdateringsmetod
 
 I uppdateringsmetoden händer mycket. Vi kollar vilka tangenter som är nedtryckta och uppdaterar spelarens hastighet och riktning baserat på detta. Vi sätter även variabler för spelarens riktning (`directionX` och `directionY`) som kan användas för att rita ögon som "tittar" i rörelseriktningen, eller för animationer och attacker.
@@ -135,6 +137,8 @@ Utgå då från att du har en `acceleration`-egenskap och en `friction`-egenskap
 I den här filen har vi skapat en `Player`-klass som hanterar spelarens rörelse och rendering. Vi har använt `InputHandler` för att läsa av tangentbordsinput och uppdaterat spelarens position baserat på detta.
 
 Vi har även gett spelaren ett enkelt ansikte med ögon som tittar i rörelseriktningen för att göra den mer karaktärsfull. Du har nu en grund för att skapa ett spel där spelaren kan röra sig runt på canvasen.
+
+> 🧠 Varför deltaTime? Om du har en skärm med 144Hz (144 bilder/sek) och din kompis har 60Hz... Utan deltaTime skulle din gubbe springa mer än dubbelt så snabbt som kompisens. Det vore fusk i multiplayer! deltaTime är matematiken som gör spelet rättvist.
 
 ### Testfrågor
 

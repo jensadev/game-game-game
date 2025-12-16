@@ -43,6 +43,8 @@ export default class Platform extends GameObject {
 
 I nuläget så är platformarna statiska, de har ingen rörelse eller fysik. Men om så skulle vara fallet (platformar som rör sig upp och ner eller faller) så kan vi lägga till fysik i denna klass också.
 
+> 🧠 Märkte du att Platform nästan är identisk med Rectangle? I proffsmotorer (som Unity) skulle vi kanske inte ens göra en egen klass, utan bara ge Rectangle en "tag" som heter "Ground". Men här gör vi en klass för att göra koden tydlig för oss människor.
+
 ## Använda plattformar
 
 I `Game.js` konstruktor skapar vi flera plattformar. Vi kan antingen använda `this.gameObjects` arrayen eller skapa en separat array. För tydlighetens skull väljer vi en separat array.
@@ -176,6 +178,8 @@ Uppdatera `GameObject.js` med följande metod:
 ```
 
 Som du ser så returnerar denna metod ett objekt med en `direction` egenskap som anger från vilken riktning kollisionen sker. Vi kan om det skulle behövas även returnera överlappningsvärdet för mer avancerad hantering.
+
+> 🛟 Det här är matte, om det inte är din grej så kan du förhoppningsvis "bara" använda koden och den fungerar. Lita på det.
 
 ### Hantera kollisioner i Game.js
 

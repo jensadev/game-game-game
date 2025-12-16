@@ -46,6 +46,12 @@ I det här projektet så använder vi import och export för att hantera moduler
 
 ## Förklaring av koden
 
+### index.html
+
+Din webbläsare kommer först att ladda denna fil. Den innehåller en `<canvas>`-element där spelet ritas upp, samt länkar till CSS och JavaScript-filer.
+
+> 🎮 Gör spelet till ditt, ändra titeln på webbsidan!
+
 ### main.js
 
 Denna fil startar spelet genom att skapa en instans av `Game`-klassen och initiera spelloopen. Det är alltså setup-koden för spelet.
@@ -122,6 +128,8 @@ Om du önskar kan du placera figuren i en separat klass som hanterar dess delar 
 
 Det här repot ger en grundläggande struktur för att skapa 2D-spel med JavaScript och HTML5 Canvas. Genom att använda klasser och moduler kan vi organisera koden på ett tydligt sätt och enkelt utöka funktionaliteten. 
 
+> 🛟 Känns det som mycket kod att hålla reda på redan nu (Main, Game, GameObject)? Det är lugnt. Du behöver inte memorera allt. Tänk på `main.js` som startnyckeln till en bil och `Game.js` som motorn. Just nu behöver vi bara veta att bilen startar.
+
 ### Testfrågor
 
 1. Vad är de tre huvudsakliga ansvarsområdena för Game-klassen?
@@ -137,17 +145,7 @@ Det här repot ger en grundläggande struktur för att skapa 2D-spel med JavaScr
 
 ## Nästa steg
 
-Denna tutorial är uppdelad i steg som följer en logisk progression. Varje steg bygger på det föregående:
-
-1. **[Player](01-player.md)** - Skapa en spelarklass med input och rörelse
-2. **[Collision](02-collision.md)** - AABB-kollisionsdetektering
-3. **[Physics](03-physics.md)** - Gravitation, hopp och plattformar
-4. **[Collectibles](04-collectibles.md)** - Mynt, score och UI
-5. **[Enemies](05-enemies.md)** - Fiender, health och damage
-
-Varje steg har sin egen git-branch (t.ex. `01-player`, `02-collision`, etc.) där koden för det steget finns implementerad.
-
-När du har jobbat klart med materialet i det här steget, byt till nästa branch för att fortsätta till nästa del i guiden.
+Denna tutorial är uppdelad i steg som följer en logisk progression. Varje steg bygger på det föregående. När du har jobbat klart med materialet i det här steget, byt till nästa branch för att fortsätta till nästa del i guiden.
 
 ```bash
 git checkout 01-player
