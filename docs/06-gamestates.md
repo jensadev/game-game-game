@@ -40,6 +40,8 @@ Det är liksom ganska meningslöst.
 
 En **state machine** är ett mönster där ett objekt kan vara i exakt ett av flera tillstånd åt gången. Övergångar mellan states styrs av conditions.
 
+> 🧠 Det vi bygger kallas en Finite State Machine (FSM). Det är ett klassiskt designmönster inom datavetenskap. Tänk på en trafikljus-kontroller: Den kan vara GRÖN, GUL eller RÖD, men aldrig GRÖN och RÖD samtidigt. Vårt spel följer exakt samma logik!
+
 **Våra states:**
 ```javascript
 'PLAYING'    // Normalt gameplay
@@ -175,7 +177,8 @@ update(deltaTime) {
 - State-check (`if (this.gameState !== 'PLAYING') return`) **stoppar** all update när ej PLAYING
 - Win/lose conditions kollas **sist** i update
 
-### Draw - UI handles overlays:
+### Draw - UI hanterar stats som ska ritas
+
 ```javascript
 draw(ctx) {
     // Rita alltid spelvärlden (som "frozen" bakgrund)
@@ -324,6 +327,8 @@ drawGameOver(ctx) {
     ctx.restore()
 }
 ```
+
+> 🎮 Skapa mer juice, en GAME OVER med bara vit text är kanske inte så spännande. Går det att skaka om världen genom att flyga this.game.x? Ändra färgen på overlayen till röd?
 
 ### Win Overlay
 
@@ -541,6 +546,8 @@ Vi har nu implementerat ett komplett game state system!
 - Restart funktionalitet med R-tangenten
 - Overlay screens med score och instruktioner
 - Init/restart pattern för återanvändbar kod
+
+> 🛟 Är det så att spelet inte startar om eller du dör direkt? Kontrollera sådant som att inputHandler lyssnar på "r" och att this.gameOver sätt still false i restart()
 
 ## Testfrågor
 
