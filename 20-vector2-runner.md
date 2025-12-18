@@ -309,33 +309,6 @@ export default class Player extends GameObject {
 }
 ```
 
----
-
-## Fördelar med denna approach
-
-### Pedagogiskt:
-
-1. **Fokuserat lärande** - Ett koncept i taget (Vector2)
-2. **Enklare kod** - Mindre distraktioner
-3. **Tydliga exempel** - Runner visar Vector2 fördelarna
-4. **Bättre progression** - Runner → Events → FSM → Complex platformer
-
-### Tekniskt:
-
-1. **Mindre kod** - Färre filer och klasser
-2. **Bättre foundation** - Vector2 är grunden för allt
-3. **Enklare att extendera** - Collision events blir tydligare senare
-4. **Procedural generation** - Introducerar spawning patterns
-
-### Speldesign:
-
-1. **Iconic genre** - Runner är välkänt
-2. **Endless gameplay** - Naturligt progressivt svårt
-3. **High score focus** - Tävlingsmoment
-4. **Simpel men rolig** - Bevisar att enkelt kan vara bra
-
----
-
 ## Vector2 i praktiken (Runner-exempel)
 
 ### Exempel 1: Player movement
@@ -368,6 +341,8 @@ const moveDirection = new Vector2(-1, 0)
 this.position.addScaled(moveDirection, this.speed * deltaTime)
 ```
 
+Allt är dock inte värt att skapa en ny vektor för, om vi bara ändrar en komponent kan det vara bättre att ändra direkt. Att skapa ett nytt vektor objekt varje frame kan vara onödigt overhead.
+
 ### Exempel 3: Collision detection
 
 Eftersom vi använder `position` istället för `x/y` separat:
@@ -381,65 +356,12 @@ intersects(other) {
 }
 ```
 
----
-
-## Vad har vi tagit bort?
-
-**Filer borttagna:**
-- ❌ `src/Enemy.js`
-- ❌ `src/Coin.js`
-- ❌ `src/Projectile.js`
-- ❌ `src/levels/Level1.js`
-- ❌ `src/levels/Level2.js`
-
-**Funktionalitet borttagen:**
-- ❌ Health system
-- ❌ Shooting mechanics
-- ❌ Enemy AI
-- ❌ Coin collection
-- ❌ Level-based progression
-- ❌ Invulnerability frames
-- ❌ Horizontal player movement
-
-**Resultat:**
-- ✅ ~300 rader mindre kod
-- ✅ 5 färre filer att underhålla
-- ✅ Enklare att förstå
-- ✅ Bättre fokus på Vector2
-
----
-
-## Nästa steg
-
-Nu när vi har:
-- ✅ Vector2 som matematisk grund
-- ✅ Ett enkelt runner-spel
-- ✅ Ren, fokuserad kod
-
-Kan vi gå vidare till:
-
-**Steg 21: Event System**
-- Collision events (`'obstacleHit'`, `'scoreIncrease'`)
-- Loose coupling mellan objekt
-- Observer pattern
-
-**Steg 22: State Machine**
-- Player states (running, jumping, dead)
-- Game states (menu, playing, game over)
-- FSM pattern
-
-**Steg 23: Återgå till Platformer (Advanced)**
-- Med events och FSM på plats
-- Mycket renare implementation
-- Students förstår varför
-
----
-
 ## Uppgifter
 
-### 1. Lägg till fler obstacle types
+### Lägg till fler obstacle types
 
-Skapa nya typer av hinder:
+Skapa nya typer av hinder, du kan hitta sprites att använda i `assets`.
+
 ```javascript
 // I Obstacle.js
 if (this.type === 'double') {
@@ -447,9 +369,10 @@ if (this.type === 'double') {
 }
 ```
 
-### 2. Implementera ducking
+### Implementera ducking
 
-Lägg till möjlighet att ducka under höga hinder:
+Lägg till möjlighet att ducka under höga hinder, det finns dock ingen sprite för detta, så du får ändra höjden på spelaren.
+
 ```javascript
 // I Player.js
 if (keys.has('ArrowDown') && this.isGrounded) {
@@ -458,9 +381,10 @@ if (keys.has('ArrowDown') && this.isGrounded) {
 }
 ```
 
-### 3. Power-ups
+### Power-ups
 
-Skapa power-ups som spawnar ibland:
+Skapa power-ups som spawnar ibland, kolla 30-spaceshooter för idéer.
+
 ```javascript
 class PowerUp extends GameObject {
     constructor(game, x, y, type) {
@@ -470,9 +394,10 @@ class PowerUp extends GameObject {
 }
 ```
 
-### 4. Bakgrundsparallax
+### Bakgrundsparallax
 
-Lägg till flera bakgrundslager med olika hastigheter:
+Lägg till flera bakgrundslager med olika hastigheter, du kan gå tillbaka till tidigare branches för exempel.
+
 ```javascript
 this.backgrounds = [
     new Background(this, bgImage1, { autoScrollX: -0.02 }),
@@ -481,9 +406,10 @@ this.backgrounds = [
 ]
 ```
 
-### 5. High score med localStorage
+### High score med localStorage
 
-Spara bästa score:
+Spara bästa score, använd `localStorage` för att spara och läsa high score. Du hittar en implementation i 30.1-spaceshooter.
+
 ```javascript
 gameOver() {
     const highScore = localStorage.getItem('runnerHighScore') || 0
@@ -499,51 +425,14 @@ gameOver() {
 
 Detta steg har:
 
-1. **Introducerat Vector2** (350+ rader, 40+ metoder) - Matematisk grund för all 2D-speldev
+1. **Introducerat Vector2** (350+ rader, 40+ metoder) - Matematisk grund för 2D-vektorer
 2. **Förenklat till Runner** - Chrome dino-inspirerat endless runner
 3. **Tagit bort komplexitet** - Fiender, mynt, skjutning, levels (~430 rader borttaget)
-4. **Tagit bort bakåtkompatibilitet** - Inga x/y getters/setters, ren Vector2-användning
-5. **Lagt till sprites** - Rock Head, Saw, tiled terrain, layered backgrounds
-6. **Menu-baserade screens** - MainMenu, GameOverMenu med key shortcuts
-7. **Debug mode** - Press P för hitboxes och debug info
-8. **Polerad presentation** - Multi-layer parallax, procedural clouds, timer
+4. **Lagt till sprites** - Rock Head, Saw, tiled terrain, layered backgrounds
+5. **Menu-baserade screens** - MainMenu, GameOverMenu med key shortcuts (vi gjorde detta tidigare i 30-spaceshooter också)
+6. **Debug mode** - Press P för hitboxes och debug info, det finns lite olika varianter av detta i flera branches
+7. **Polerad presentation** - Multi-layer parallax, procedural clouds, timer
 
-**Borttagna filer:**
-- ❌ `Enemy.js`
-- ❌ `Coin.js`
-- ❌ `Projectile.js`
-- ❌ `Level1.js`, `Level2.js`, `Level.js`
-- ❌ `Rectangle.js`
-- ❌ `PlatformerGame.js`
-
-**Nya filer:**
-- ✅ `Vector2.js` (350+ lines)
-- ✅ `Obstacle.js`
-- ✅ `ObstacleSpawner.js`
-- ✅ `RunnerGame.js`
-- ✅ `GameOverMenu.js`
-
-**Viktiga arkitekturbeslut:**
-1. Fixed camera (0, 0) - background scrollar istället
-2. Inga bakåtkompatibilitetslager - tvingar Vector2
-3. Menu-system för alla screens
-4. Sprite-baserad rendering med tiling
-5. Debug mode för utveckling
-
-**Vector2 + Runner = Perfekt kombination för att lära speldev! 🎮🦖**
-
----
 
 ## Nästa steg
 
-**Steg 21: Event System**
-- Observer pattern
-- Collision events
-- Decoupling med events
-
-**Steg 22: State Machine (FSM)**
-- Player states
-- Clean state transitions  
-- FSM pattern
-
-**Vector2 är grunden. Events och FSM är nästa nivå.** 🚀
