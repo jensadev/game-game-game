@@ -4,6 +4,7 @@ import Projectile from './Projectile.js'
 import Level1 from './levels/Level1.js'
 import Level2 from './levels/Level2.js'
 import MainMenu from './menus/MainMenu.js'
+import SaveGameManager from './SaveGameManager.js'
 
 /**
  * PlatformerGame - En konkret implementation av GameBase för plattformsspel
@@ -40,6 +41,9 @@ export default class PlatformerGame extends GameBase {
         // Background arrays (sätts av levels)
         this.backgrounds = []
         this.backgroundObjects = []
+        
+        // Save game system
+        this.saveManager = new SaveGameManager('platformer-save')
         
         // Initiera spelet
         this.init()
@@ -134,6 +138,58 @@ export default class PlatformerGame extends GameBase {
         this.gameState = 'PLAYING'
         this.currentMenu = null
     }
+    
+    /**
+     * Sparar nuvarande spelläge
+     */
+    saveGame() {
+        // Kolla att spelaren finns (kan inte spara om spelet inte har startat)
+        if (!this.player) {
+            console.warn('Cannot save: game not started')
+            return false
+        }
+        
+        return this.saveManager.save({
+            currentLevelIndex: this.currentLevelIndex,
+            score: this.score,
+            coinsCollected: this.coinsCollected,
+            health: this.player.health,
+            playerX: this.player.x,
+            playerY: this.player.y
+        })
+    }
+    
+    /**
+     * Laddar sparat spelläge
+     * @returns {boolean} True om laddning lyckades
+     */
+    loadGame() {
+        const saveData = this.saveManager.load()
+        if (!saveData) {
+            console.warn('No save data found')
+            return false
+        }
+        
+        // Ladda level först
+        this.currentLevelIndex = saveData.currentLevelIndex
+        this.loadLevel(this.currentLevelIndex)
+        
+        // Återställ spelarens position och hälsa
+        this.player.x = saveData.playerX
+        this.player.y = saveData.playerY
+        this.player.health = saveData.health
+        
+        // Återställ progress
+        this.score = saveData.score
+        this.coinsCollected = saveData.coinsCollected
+        
+        // Starta spelet
+        this.gameState = 'PLAYING'
+        this.currentMenu = null
+        
+        console.log('Game loaded!')
+        return true
+    }
 
     update(deltaTime) {
         // Uppdatera menyn om den är aktiv
@@ -168,6 +224,16 @@ export default class PlatformerGame extends GameBase {
             this.currentLevelIndex = (this.currentLevelIndex + 1) % this.levels.length
             this.loadLevel(this.currentLevelIndex)
             this.gameState = 'PLAYING'
+            return
+        }
+        
+        // Spara spelet med S-tangenten (endast när spelet körs)
+        if ((this.inputHandler.keys.has('s') || this.inputHandler.keys.has('S')) && this.gameState === 'PLAYING') {
+            // Ta bort tangenten så den inte triggas flera gånger
+            this.inputHandler.keys.delete('s')
+            this.inputHandler.keys.delete('S')
+            
+            this.saveGame()
             return
         }
         

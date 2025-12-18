@@ -24,6 +24,16 @@ export default class ControlsMenu extends Menu {
                 action: null
             },
             {
+                text: 'S - Save Game',
+                key: null,
+                action: null
+            },
+            {
+                text: 'Escape - Menu',
+                key: null,
+                action: null
+            },
+            {
                 text: 'Back to Menu',
                 key: 'Escape',
                 action: () => {
