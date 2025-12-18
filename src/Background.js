@@ -16,6 +16,7 @@ export default class Background {
         
         // Options med defaults
         this.tiled = options.tiled !== undefined ? options.tiled : true
+        this.tileX = options.tileX !== undefined ? options.tileX : true
         this.tileWidth = options.tileWidth || 64
         this.tileHeight = options.tileHeight || 64
         this.tileY = options.tileY !== undefined ? options.tileY : true // Tila på Y-axeln?
@@ -23,21 +24,36 @@ export default class Background {
         this.yPosition = options.yPosition !== undefined ? options.yPosition : 0 // Vertikal position (0 = top)
         this.height = options.height || null // Höjd att rita (null = full height)
         
+        // Auto-scroll (för space shooter, runner, etc.)
+        this.autoScrollX = options.autoScrollX || 0 // pixels per ms
+        this.autoScrollY = options.autoScrollY || 0
+        
         // För parallax - spara offset
         this.offsetX = 0
         this.offsetY = 0
     }
     
     update(deltaTime) {
-        // Inget att uppdatera just nu, men bra att ha för framtida animationer
+        // Auto-scroll - flytta offset baserat på auto-scroll hastighet
+        if (this.autoScrollX !== 0) {
+            this.offsetX += this.autoScrollX * deltaTime
+        }
+        if (this.autoScrollY !== 0) {
+            this.offsetY += this.autoScrollY * deltaTime
+        }
     }
     
     draw(ctx, camera) {
         if (!this.imageLoaded) return
         
-        // Beräkna parallax offset baserat på kamera och scroll speed
-        this.offsetX = camera.x * this.scrollSpeed
-        this.offsetY = camera.y * this.scrollSpeed
+        // Om vi inte har auto-scroll, använd kamera för parallax
+        // Annars har update() redan satt offsetX/Y
+        if (this.autoScrollX === 0) {
+            this.offsetX = camera.x * this.scrollSpeed
+        }
+        if (this.autoScrollY === 0) {
+            this.offsetY = camera.y * this.scrollSpeed
+        }
         
         if (this.tiled) {
             this.drawTiled(ctx, camera)

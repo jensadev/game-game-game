@@ -38,25 +38,24 @@ export default class ObstacleSpawner {
     }
     
     spawn() {
-        const types = ['cactus', 'bird', 'rock']
+        const types = ['rock', 'saw']
         const type = types[Math.floor(Math.random() * types.length)]
         
         let x = this.game.width
-        let y = this.game.height - 100 // Ground level
-        let width = 30
-        let height = 40
+        let y = this.game.height - 48 // Ground level (48px tall platform)
+        let width = 42
+        let height = 42
         
-        // Fåglar flyger högre
-        if (type === 'bird') {
-            y = this.game.height - 200
-            width = 40
-            height = 20
-        }
-        
-        // Stenar är bredare
         if (type === 'rock') {
-            width = 40
-            height = 30
+            // Rock Head is 42x42
+            width = 42
+            height = 42
+            y = y - height // Place on top of ground
+        } else if (type === 'saw') {
+            // Saw is 38x38
+            width = 38
+            height = 38
+            y = y - height // Place on top of ground
         }
         
         const obstacle = new Obstacle(this.game, x, y, width, height, type)

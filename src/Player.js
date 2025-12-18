@@ -1,9 +1,8 @@
 import GameObject from './GameObject.js'
 import Vector2 from './Vector2.js'
-import idleSprite from './assets/Pixel Adventure 1/Main Characters/Ninja Frog/Idle (32x32).png'
-import runSprite from './assets/Pixel Adventure 1/Main Characters/Ninja Frog/Run (32x32).png'
-import jumpSprite from './assets/Pixel Adventure 1/Main Characters/Ninja Frog/Jump (32x32).png'
-import fallSprite from './assets/Pixel Adventure 1/Main Characters/Ninja Frog/Fall (32x32).png'
+import runSprite from './assets/Pixel Adventure 1/Main Characters/Mask Dude/Run (32x32).png'
+import jumpSprite from './assets/Pixel Adventure 1/Main Characters/Mask Dude/Jump (32x32).png'
+import fallSprite from './assets/Pixel Adventure 1/Main Characters/Mask Dude/Fall (32x32).png'
 
 export default class Player extends GameObject {
     constructor(game, x, y, width, height, color) {
@@ -18,7 +17,6 @@ export default class Player extends GameObject {
         this.isGrounded = false
         
         // Sprite animation system
-        this.loadSprite('idle', idleSprite, 11, 150)
         this.loadSprite('run', runSprite, 12, 60) // Snabbare animation för runner
         this.loadSprite('jump', jumpSprite, 1)
         this.loadSprite('fall', fallSprite, 1)

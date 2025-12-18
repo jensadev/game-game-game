@@ -4,8 +4,10 @@ import Platform from "./Platform.js"
 import ObstacleSpawner from "./ObstacleSpawner.js"
 import Background from "./Background.js"
 import MainMenu from "./menus/MainMenu.js"
+import GameOverMenu from "./menus/GameOverMenu.js"
 
-import bgImage from "./assets/clouds/Big Clouds.png"
+import bgImage from "./assets/Pixel Adventure 1/Background/Blue.png"
+import terrainImage from "./assets/Pixel Adventure 1/Terrain/Terrain (16x16).png"
 
 export default class RunnerGame extends GameBase {
     constructor(width, height) {
@@ -18,6 +20,7 @@ export default class RunnerGame extends GameBase {
         // Distance tracking (score)
         this.distance = 0
         this.distanceMultiplier = 0.1 // Pixels per frame
+        this.playTime = 0 // Time in seconds
         
         // Game objects
         this.platforms = []
@@ -27,6 +30,10 @@ export default class RunnerGame extends GameBase {
         // Backgrounds
         this.backgrounds = []
         
+        // Kamera - fixerad på (0, 0) för runner (ingen scrolling)
+        this.camera.position.set(0, 0)
+        this.camera.target.set(0, 0)
+        
         this.init()
     }
     
@@ -34,6 +41,7 @@ export default class RunnerGame extends GameBase {
         this.gameState = 'MENU'
         this.distance = 0
         this.score = 0
+        this.playTime = 0
         
         // Skapa main menu
         this.currentMenu = new MainMenu(this, () => this.restart())
@@ -43,18 +51,38 @@ export default class RunnerGame extends GameBase {
             new Background(this, bgImage, {
                 autoScrollX: -0.05,
                 tileX: true,
-                tileY: false
+                tileY: true
             })
         ]
         
-        // Skapa mark (en lång platform)
-        const groundY = this.height - 60
+        // Skapa mark (tiled terrain) - 3 rows
+        const groundY = this.height - 48
         this.platforms = [
-            new Platform(this, 0, groundY, this.width * 3, 60, '#654321')
+            new Platform(this, 0, this.height - 48, this.width * 3, 16, '#654321', {
+                src: terrainImage,
+                sourceX: 112,
+                sourceY: 0,
+                width: 16,
+                height: 16
+            }),
+            new Platform(this, 0, this.height - 32, this.width * 3, 16, '#654321', {
+                src: terrainImage,
+                sourceX: 112,
+                sourceY: 16,
+                width: 16,
+                height: 16
+            }),
+            new Platform(this, 0, this.height - 16, this.width * 3, 16, '#654321', {
+                src: terrainImage,
+                sourceX: 112,
+                sourceY: 32,
+                width: 16,
+                height: 16
+            })
         ]
         
         // Skapa spelaren
-        this.player = new Player(this, 100, groundY - 50, 50, 50, 'green')
+        this.player = new Player(this, 100, this.height - 50, 50, 50, 'green')
         
         // Skapa obstacle spawner
         this.obstacleSpawner = new ObstacleSpawner(this)
@@ -63,8 +91,10 @@ export default class RunnerGame extends GameBase {
     
     restart() {
         this.gameState = 'PLAYING'
+        this.currentMenu = null
         this.distance = 0
         this.score = 0
+        this.playTime = 0
         
         // Återställ spelaren
         const groundY = this.height - 60
@@ -77,12 +107,15 @@ export default class RunnerGame extends GameBase {
     
     update(deltaTime) {
         // Kolla meny-state
-        if (this.gameState === 'MENU' && this.currentMenu) {
+        if ((this.gameState === 'MENU' || this.gameState === 'GAME_OVER') && this.currentMenu) {
             this.currentMenu.update(deltaTime)
             return
         }
         
         if (this.gameState !== 'PLAYING') return
+        
+        // Uppdatera tid
+        this.playTime += deltaTime / 1000
         
         // Uppdatera distance (score)
         this.distance += this.distanceMultiplier * deltaTime
@@ -115,9 +148,6 @@ export default class RunnerGame extends GameBase {
         
         // Ta bort markerade obstacles
         this.obstacles = this.obstacles.filter(o => !o.markedForDeletion)
-        
-        // Uppdatera UI
-        this.ui.update(deltaTime)
     }
     
     draw(ctx) {
@@ -125,17 +155,17 @@ export default class RunnerGame extends GameBase {
         ctx.fillStyle = '#87CEEB' // Ljusblå himmel
         ctx.fillRect(0, 0, this.width, this.height)
         
-        // Rita bakgrunder (ingen camera för runner)
-        this.backgrounds.forEach(bg => bg.draw(ctx, null))
+        // Rita bakgrunder med fixerad kamera
+        this.backgrounds.forEach(bg => bg.draw(ctx, this.camera))
         
         // Rita mark
-        this.platforms.forEach(platform => platform.draw(ctx, null))
+        this.platforms.forEach(platform => platform.draw(ctx, this.camera))
         
         // Rita obstacles
-        this.obstacles.forEach(obstacle => obstacle.draw(ctx, null))
+        this.obstacles.forEach(obstacle => obstacle.draw(ctx, this.camera))
         
         // Rita spelaren
-        this.player.draw(ctx, null)
+        this.player.draw(ctx, this.camera)
         
         // Rita UI
         this.ui.draw(ctx)
@@ -149,7 +179,17 @@ export default class RunnerGame extends GameBase {
     gameOver() {
         this.gameState = 'GAME_OVER'
         
-        // Visa Game Over menu (kan skapas senare)
-        // För nu, bara visa text
+        // Skapa Game Over menu
+        this.currentMenu = new GameOverMenu(
+            this,
+            this.score,
+            this.playTime,
+            () => this.restart(),
+            () => this.returnToMainMenu()
+        )
+    }
+    
+    returnToMainMenu() {
+        this.init()
     }
 }
