@@ -1,6 +1,7 @@
 import InputHandler from './InputHandler.js'
 import UserInterface from './UserInterface.js'
 import Camera from './Camera.js'
+import EventEmitter from './EventEmitter.js'
 
 /**
  * Abstract base class för alla speltyper
@@ -28,6 +29,9 @@ export default class GameBase {
         this.score = 0
         this.currentMenu = null // Nuvarande meny som visas
         this.debug = false // Debug mode
+
+        // Event system - centralt för loose coupling
+        this.events = new EventEmitter()
 
         // Gemensamma system som alla spel behöver
         this.inputHandler = new InputHandler(this)

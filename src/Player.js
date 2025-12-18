@@ -29,6 +29,12 @@ export default class Player extends GameObject {
         if ((this.game.inputHandler.keys.has(' ') || this.game.inputHandler.keys.has('ArrowUp')) && this.isGrounded) {
             this.velocity.y = this.jumpPower
             this.isGrounded = false
+            
+            // Emit jump event
+            this.game.events.emit('playerJump', {
+                position: this.position.clone(),
+                velocity: this.velocity.clone()
+            })
         }
 
         // Applicera gravitation
@@ -62,9 +68,17 @@ export default class Player extends GameObject {
         if (collision) {
             if (collision.direction === 'top' && this.velocity.y > 0) {
                 // Spelaren landar på plattformen
+                const wasGrounded = this.isGrounded
                 this.position.y = platform.position.y - this.height
                 this.velocity.y = 0
                 this.isGrounded = true
+                
+                // Emit landed event (only if wasn't grounded before)
+                if (!wasGrounded) {
+                    this.game.events.emit('playerLanded', {
+                        position: this.position.clone()
+                    })
+                }
             } else if (collision.direction === 'bottom' && this.velocity.y < 0) {
                 // Spelaren träffar huvudet
                 this.position.y = platform.position.y + platform.height

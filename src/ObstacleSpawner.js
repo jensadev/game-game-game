@@ -60,6 +60,13 @@ export default class ObstacleSpawner {
         
         const obstacle = new Obstacle(this.game, x, y, width, height, type)
         this.game.obstacles.push(obstacle)
+        
+        // Emit obstacle spawned event
+        this.game.events.emit('obstacleSpawned', {
+            type: type,
+            position: { x, y },
+            size: { width, height }
+        })
     }
     
     reset() {

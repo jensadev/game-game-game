@@ -43,7 +43,44 @@ export default class RunnerGame extends GameBase {
         this.camera.position.set(0, 0)
         this.camera.target.set(0, 0)
         
+        // Setup event listeners
+        this.setupEventListeners()
+        
         this.init()
+    }
+    
+    setupEventListeners() {
+        // Listen for collision events
+        this.events.on('obstacleHit', (data) => {
+            console.log('Obstacle hit!', data)
+            this.gameOver()
+        })
+        
+        // Listen for score milestones
+        this.events.on('scoreMilestone', (data) => {
+            console.log(`Score milestone reached: ${data.score}`)
+        })
+        
+        // Listen for obstacle spawn
+        this.events.on('obstacleSpawned', (data) => {
+            if (this.debug) {
+                console.log('Obstacle spawned:', data.type)
+            }
+        })
+        
+        // Listen for player jump
+        this.events.on('playerJump', () => {
+            if (this.debug) {
+                console.log('Player jumped!')
+            }
+        })
+        
+        // Listen for player landed
+        this.events.on('playerLanded', () => {
+            if (this.debug) {
+                console.log('Player landed!')
+            }
+        })
     }
     
     init() {
@@ -160,8 +197,14 @@ export default class RunnerGame extends GameBase {
         this.playTime += deltaTime / 1000
         
         // Uppdatera distance (score)
+        const oldScore = this.score
         this.distance += this.distanceMultiplier * deltaTime
         this.score = Math.floor(this.distance)
+        
+        // Emit score milestone events (every 100 points)
+        if (Math.floor(oldScore / 100) < Math.floor(this.score / 100)) {
+            this.events.emit('scoreMilestone', { score: this.score })
+        }
         
         // Uppdatera bakgrunder
         this.backgrounds.forEach(bg => bg.update(deltaTime))
@@ -184,7 +227,13 @@ export default class RunnerGame extends GameBase {
         // Kolla kollision med obstacles
         for (const obstacle of this.obstacles) {
             if (this.player.intersects(obstacle)) {
-                this.gameOver()
+                // Emit collision event instead of calling gameOver directly
+                this.events.emit('obstacleHit', { 
+                    obstacle: obstacle,
+                    player: this.player,
+                    score: this.score,
+                    time: this.playTime
+                })
                 break
             }
         }
