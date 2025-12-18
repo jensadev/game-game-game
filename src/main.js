@@ -1,15 +1,15 @@
 import './style.css'
-import RunnerGame from './RunnerGame.js'
+import TowerDefenseGame from './TowerDefenseGame.js'
 
 const setupGame = (canvas) => {
-    // Sätt storlek på canvas 854x480 (16:9)
-    canvas.width = 854
-    canvas.height = 480
+    // Sätt storlek på canvas för tower defense (960x640 för 15x10 grid med 64px tiles)
+    canvas.width = 960
+    canvas.height = 640
     // ctx är "ritkontexten", används för att rita på canvas
     const ctx = canvas.getContext('2d')
 
-    // Skapa runner-spelet
-    const game = new RunnerGame(canvas.width, canvas.height)
+    // Skapa tower defense-spelet
+    const game = new TowerDefenseGame(canvas)
     let lastTime = 0
     // Game loop variabel så att vi kan stoppa den senare om vi vill
     let gameLoop
@@ -25,8 +25,8 @@ const setupGame = (canvas) => {
         // Säkerhets-cap för deltaTime (max 100ms)
         const cappedDeltaTime = Math.min(deltaTime, 100)
         
-        // Rensa canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        // Rensa canvas (görs i game.draw() för tower defense)
+        // ctx.clearRect(0, 0, canvas.width, canvas.height)
         
         // Uppdatera och rita
         game.update(cappedDeltaTime)
