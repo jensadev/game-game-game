@@ -25,10 +25,15 @@ export default class Enemy extends GameObject {
         // Movement
         this.velocity = new Vector2(0, 0)
         this.speed = config.speed || 0.08  // pixels per millisekund
+        this.speedMultiplier = 1.0  // För slow effects
         
         // Health
         this.maxHealth = config.health || 100
         this.health = this.maxHealth
+        
+        // Effects (för components)
+        this.slowEffects = []    // Slow effects från Ice Tower
+        this.poisonEffects = []  // Poison effects från Poison Tower
         
         // Rewards
         this.goldValue = config.gold || 25
@@ -66,8 +71,9 @@ export default class Enemy extends GameObject {
         const toTarget = target.subtract(this.position)
         const direction = toTarget.normalize()
         
-        // Sätt velocity baserat på direction och speed
-        this.velocity = direction.multiply(this.speed)
+        // Sätt velocity baserat på direction, speed OCH speed multiplier
+        const effectiveSpeed = this.speed * this.speedMultiplier
+        this.velocity = direction.multiply(effectiveSpeed)
         
         // Flytta enemy
         this.position.addScaled(this.velocity, deltaTime)

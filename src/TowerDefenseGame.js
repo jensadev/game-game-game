@@ -4,10 +4,14 @@ import Tower from './Tower.js'
 import Enemy from './Enemy.js'
 import Camera from './Camera.js'
 import Vector2 from './Vector2.js'
+import { TOWER_TYPES, getTowerType } from './TowerTypes.js'
+import SplashComponent from './components/SplashComponent.js'
+import PoisonComponent from './components/PoisonComponent.js'
 
 /**
  * TowerDefenseGame - Tower Defense spel
  * 
+ * Branch 24: Component system för olika tower types 
  * Branch 23: Basic implementation
  * - Grid system för att placera torn
  * - Mouse input för att bygga
@@ -35,8 +39,9 @@ export default class TowerDefenseGame extends GameBase {
         this.wave = 0            // Nuvarande våg
         this.score = 0
         
-        // Tower cost
-        this.towerCost = 100
+        // Tower selection
+        this.selectedTowerType = 'CANNON'  // Default till cannon
+        this.towerCost = TOWER_TYPES.CANNON.cost
         
         // Wave spawning
         this.waveInProgress = false
@@ -212,7 +217,6 @@ export default class TowerDefenseGame extends GameBase {
         this.wave = 0
         this.score = 0
     }
-    
     /**
      * Hantera mouse click för att bygga torn
      */
@@ -229,50 +233,46 @@ export default class TowerDefenseGame extends GameBase {
             return
         }
         
+        // Hämta tower type config
+        const towerType = getTowerType(this.selectedTowerType)
+        
         // Kolla om har råd
-        if (this.gold < this.towerCost) {
-            console.log('Not enough gold!')
+        if (this.gold < towerType.cost) {
+            console.log(`Not enough gold! Need ${towerType.cost}G`)
             return
         }
         
-        // Bygg torn
+        // Bygg torn med vald typ
         const worldPos = this.grid.getWorldPosition(row, col)
-        const tower = new Tower(this, worldPos.x, worldPos.y)
+        const tower = new Tower(this, worldPos.x, worldPos.y, towerType)
         
         // Placera i grid
         if (this.grid.placeTower(row, col, tower)) {
             this.towers.push(tower)
-            this.gold -= this.towerCost
+            this.gold -= towerType.cost
+            
+            console.log(`Built ${towerType.name} for ${towerType.cost}G`)
             
             // Emit event
             this.events.emit('towerBuilt', {
                 tower,
+                towerType: towerType.id,
                 row,
                 col,
-                cost: this.towerCost
+                cost: towerType.cost
             })
         }
     }
     
     /**
-     * Skapa projectile (kallas från Tower)
-     * @param {Vector2} position - Start position
-     * @param {Vector2} direction - Normalized direction
-     * @param {number} damage - Skada
-     * @param {Tower} tower - Tornet som sköt
-     * @returns {Object} Projectile object
+     * Välj tower type att bygga (kallas av key press)
      */
-    createProjectile(position, direction, damage, tower) {
-        return {
-            position: position.clone(),
-            velocity: direction.multiply(0.6),  // Speed
-            damage,
-            tower,
-            width: 8,
-            height: 8,
-            distanceTraveled: 0,
-            maxDistance: tower.range * 1.5,  // Lite längre än range
-            markedForDeletion: false
+    selectTowerType(typeId) {
+        const towerType = getTowerType(typeId)
+        if (towerType) {
+            this.selectedTowerType = typeId
+            this.towerCost = towerType.cost
+            console.log(`Selected: ${towerType.name} (${towerType.cost}G)`)
         }
     }
     
@@ -281,6 +281,24 @@ export default class TowerDefenseGame extends GameBase {
      * @param {number} deltaTime - Tid sedan förra frame
      */
     update(deltaTime) {
+        // Hantera tower selection med number keys
+        if (this.inputHandler.keys.has('1')) {
+            this.selectTowerType('CANNON')
+            this.inputHandler.keys.delete('1')
+        }
+        if (this.inputHandler.keys.has('2')) {
+            this.selectTowerType('ICE')
+            this.inputHandler.keys.delete('2')
+        }
+        if (this.inputHandler.keys.has('3')) {
+            this.selectTowerType('SPLASH')
+            this.inputHandler.keys.delete('3')
+        }
+        if (this.inputHandler.keys.has('4')) {
+            this.selectTowerType('POISON')
+            this.inputHandler.keys.delete('4')
+        }
+        
         // Spawn enemies om våg pågår
         if (this.waveInProgress && this.enemiesSpawned < this.enemiesToSpawn) {
             this.spawnTimer += deltaTime
@@ -350,6 +368,14 @@ export default class TowerDefenseGame extends GameBase {
                         if (enemy.takeDamage) {
                             const killed = enemy.takeDamage(projectile.damage)
                             
+                            // Applicera poison om tornet har PoisonComponent
+                            if (projectile.tower) {
+                                const poisonComp = projectile.tower.getComponent(PoisonComponent)
+                                if (poisonComp) {
+                                    poisonComp.applyPoison(enemy)
+                                }
+                            }
+                            
                             // Om enemy dog, ge gold och score
                             if (killed) {
                                 this.gold += enemy.goldValue || 25
@@ -370,6 +396,14 @@ export default class TowerDefenseGame extends GameBase {
                             // Register damage på tower
                             if (projectile.tower) {
                                 projectile.tower.registerDamage(projectile.damage)
+                            }
+                        }
+                        
+                        // Applicera splash damage om tornet har SplashComponent
+                        if (projectile.tower) {
+                            const splashComp = projectile.tower.getComponent(SplashComponent)
+                            if (splashComp) {
+                                splashComp.onProjectileHit(projectile, enemy, projectile.position.clone())
                             }
                         }
                         
@@ -456,8 +490,8 @@ export default class TowerDefenseGame extends GameBase {
         const offsetX = this.camera ? this.camera.position.x : 0
         const offsetY = this.camera ? this.camera.position.y : 0
         
-        ctx.fillStyle = 'yellow'
         this.projectiles.forEach(projectile => {
+            ctx.fillStyle = projectile.color || 'yellow'
             ctx.beginPath()
             ctx.arc(
                 projectile.position.x - offsetX,
@@ -492,12 +526,51 @@ export default class TowerDefenseGame extends GameBase {
         // Wave
         ctx.fillText(`Wave: ${this.wave}`, 10, 120)
         
-        // Tower cost
-        ctx.fillText(`Tower: ${this.towerCost}G`, 10, 150)
+        // Selected tower
+        const selectedType = getTowerType(this.selectedTowerType)
+        ctx.fillText(`Tower: ${selectedType.name}`, 10, 150)
+        ctx.fillText(`Cost: ${selectedType.cost}G`, 10, 180)
+        
+        // Tower selection (höger sida)
+        ctx.font = '16px Arial'
+        ctx.fillStyle = 'white'
+        ctx.fillText('Tower Types:', this.canvas.width - 200, 30)
+        
+        const towerTypes = [
+            { key: '1', type: TOWER_TYPES.CANNON },
+            { key: '2', type: TOWER_TYPES.ICE },
+            { key: '3', type: TOWER_TYPES.SPLASH },
+            { key: '4', type: TOWER_TYPES.POISON }
+        ]
+        
+        towerTypes.forEach((item, index) => {
+            const y = 60 + index * 70
+            const isSelected = this.selectedTowerType === item.type.id.toUpperCase()
+            
+            // Background box
+            ctx.fillStyle = isSelected ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.3)'
+            ctx.fillRect(this.canvas.width - 200, y - 20, 190, 60)
+            
+            // Tower color swatch
+            ctx.fillStyle = item.type.color
+            ctx.fillRect(this.canvas.width - 195, y - 15, 30, 30)
+            ctx.strokeStyle = item.type.barrelColor
+            ctx.lineWidth = 2
+            ctx.strokeRect(this.canvas.width - 195, y - 15, 30, 30)
+            
+            // Text
+            ctx.fillStyle = isSelected ? 'yellow' : 'white'
+            ctx.font = '14px Arial'
+            ctx.fillText(`[${item.key}] ${item.type.name}`, this.canvas.width - 160, y)
+            ctx.font = '12px Arial'
+            ctx.fillStyle = 'lightgray'
+            ctx.fillText(`${item.type.cost}G - ${item.type.description}`, this.canvas.width - 160, y + 20)
+        })
         
         // Instructions
         ctx.font = '14px Arial'
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
+        ctx.fillText('Press 1-4 to select tower', 10, this.canvas.height - 60)
         ctx.fillText('Click to build tower', 10, this.canvas.height - 40)
         ctx.fillText('Press P for debug mode', 10, this.canvas.height - 20)
     }

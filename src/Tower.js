@@ -2,123 +2,102 @@ import GameObject from './GameObject.js'
 import Vector2 from './Vector2.js'
 
 /**
- * Tower - Torn som skjuter på enemies
+ * Tower - Component-based tower system
  * 
- * Tornet hittar närmaste enemy inom range och skjuter på den.
- * För branch 23 har vi bara en basic tower typ.
- * I branch 24 kommer vi lägga till komponenter för olika tower types.
+ * Branch 24: Towers använder nu components för behavior.
+ * Detta tillåter oss att kombinera olika behaviors för att skapa olika tower types.
+ * 
+ * Composition > Inheritance
  */
 export default class Tower extends GameObject {
     /**
      * @param {Object} game - Game instance
      * @param {number} x - World X position
      * @param {number} y - World Y position
+     * @param {Object} towerType - Tower type config from TowerTypes.js
      */
-    constructor(game, x, y) {
+    constructor(game, x, y, towerType) {
         super(game, x, y, 64, 64)
         
-        // Tower stats
-        this.range = 200          // Skjutavstånd i pixels
-        this.fireRate = 1000      // Millisekunder mellan skott
-        this.damage = 50          // Skada per skott
-        this.cooldown = 0         // Nuvarande cooldown
+        // Tower type info
+        this.towerType = towerType
+        this.name = towerType.name
+        this.description = towerType.description
         
-        // Visuellt
-        this.color = 'blue'
-        this.barrelColor = 'darkblue'
-        this.rangeColor = 'rgba(0, 255, 255, 0.2)'
+        // Visuellt från config
+        this.color = towerType.color
+        this.barrelColor = towerType.barrelColor
         
-        // Targeting
+        // Components array
+        this.components = []
+        
+        // Targeting (används av components)
         this.currentTarget = null
-        this.targetAngle = 0      // Riktning mot target (för att rotera barrel)
+        this.targetAngle = 0
         
         // Stats för UI
         this.kills = 0
         this.totalDamage = 0
+        
+        // Lägg till components från config
+        this.setupComponents(towerType.components)
     }
     
     /**
-     * Uppdatera tower - hitta target och skjut
+     * Setup components från tower type config
+     */
+    setupComponents(componentConfigs) {
+        for (const componentConfig of componentConfigs) {
+            const ComponentClass = componentConfig.type
+            const config = componentConfig.config || {}
+            
+            const component = new ComponentClass(this, config)
+            this.addComponent(component)
+        }
+    }
+    
+    /**
+     * Lägg till en component
+     */
+    addComponent(component) {
+        this.components.push(component)
+        
+        if (component.onAdd) {
+            component.onAdd()
+        }
+    }
+    
+    /**
+     * Ta bort en component
+     */
+    removeComponent(component) {
+        const index = this.components.indexOf(component)
+        if (index !== -1) {
+            if (component.onRemove) {
+                component.onRemove()
+            }
+            this.components.splice(index, 1)
+        }
+    }
+    
+    /**
+     * Hämta component by type
+     */
+    getComponent(ComponentClass) {
+        return this.components.find(c => c instanceof ComponentClass)
+    }
+    
+    /**
+     * Uppdatera tower - kör alla components
      * @param {number} deltaTime - Tid sedan förra frame
      */
     update(deltaTime) {
-        // Minska cooldown
-        if (this.cooldown > 0) {
-            this.cooldown -= deltaTime
-        }
-        
-        // Hitta närmaste enemy inom range
-        this.currentTarget = this.findClosestEnemy()
-        
-        // Om vi har target och cooldown är klar, skjut
-        if (this.currentTarget && this.cooldown <= 0) {
-            this.shoot(this.currentTarget)
-            this.cooldown = this.fireRate
-            
-            // Emit event
-            this.game.events.emit('towerShoot', {
-                tower: this,
-                target: this.currentTarget,
-                position: this.position.clone()
-            })
-        }
-        
-        // Uppdatera barrel angle mot target
-        if (this.currentTarget) {
-            const center = this.position.add(new Vector2(this.width / 2, this.height / 2))
-            const direction = this.currentTarget.position.subtract(center)
-            this.targetAngle = Math.atan2(direction.y, direction.x)
-        }
-    }
-    
-    /**
-     * Hitta närmaste enemy inom range
-     * @returns {Object|null} Närmaste enemy eller null
-     */
-    findClosestEnemy() {
-        if (!this.game.enemies || this.game.enemies.length === 0) {
-            return null
-        }
-        
-        let closest = null
-        let closestDist = this.range
-        
-        const center = this.position.add(new Vector2(this.width / 2, this.height / 2))
-        
-        for (const enemy of this.game.enemies) {
-            // Skippa döda enemies
-            if (enemy.markedForDeletion || enemy.health <= 0) {
-                continue
+        // Uppdatera alla components
+        this.components.forEach(component => {
+            if (component.enabled) {
+                component.update(deltaTime)
             }
-            
-            const dist = center.distanceTo(enemy.position)
-            if (dist < closestDist) {
-                closest = enemy
-                closestDist = dist
-            }
-        }
-        
-        return closest
-    }
-    
-    /**
-     * Skjut projectile mot target
-     * @param {Object} target - Enemy att skjuta på
-     */
-    shoot(target) {
-        // Skapa projectile från tornets center
-        const center = this.position.add(new Vector2(this.width / 2, this.height / 2))
-        
-        // Beräkna direction till target (använd target center)
-        const targetCenter = target.position.add(new Vector2(target.width / 2, target.height / 2))
-        const direction = targetCenter.subtract(center).normalize()
-        
-        // Skapa projectile
-        const projectile = this.game.createProjectile(center, direction, this.damage, this)
-        
-        if (projectile) {
-            this.game.projectiles.push(projectile)
-        }
+        })
     }
     
     /**
@@ -148,32 +127,13 @@ export default class Tower extends GameObject {
         const screenX = this.position.x - offsetX
         const screenY = this.position.y - offsetY
         
-        // Rita range (om debug mode)
-        if (this.game.inputHandler.debugMode) {
-            ctx.fillStyle = this.rangeColor
-            ctx.beginPath()
-            ctx.arc(
-                screenX + this.width / 2,
-                screenY + this.height / 2,
-                this.range,
-                0,
-                Math.PI * 2
-            )
-            ctx.fill()
-            
-            // Rita range outline
-            ctx.strokeStyle = 'cyan'
-            ctx.lineWidth = 1
-            ctx.stroke()
-        }
-        
         // Rita tower base (fyrkant)
         ctx.fillStyle = this.color
         ctx.fillRect(screenX, screenY, this.width, this.height)
         
         // Rita tower kant
-        ctx.strokeStyle = 'darkblue'
-        ctx.lineWidth = 2
+        ctx.strokeStyle = this.barrelColor
+        ctx.lineWidth = 3
         ctx.strokeRect(screenX, screenY, this.width, this.height)
         
         // Rita barrel (riktad mot target)
@@ -190,35 +150,22 @@ export default class Tower extends GameObject {
         
         ctx.restore()
         
-        // Rita cooldown indicator
-        if (this.cooldown > 0) {
-            const cooldownPercent = this.cooldown / this.fireRate
-            ctx.fillStyle = 'rgba(255, 255, 0, 0.5)'
-            ctx.fillRect(
-                screenX,
-                screenY + this.height - 4,
-                this.width * (1 - cooldownPercent),
-                4
-            )
-        }
+        // Rita components (range circles, effects, etc)
+        this.components.forEach(component => {
+            if (component.draw) {
+                component.draw(ctx, camera)
+            }
+        })
         
-        // Rita target line (debug mode)
-        if (this.game.inputHandler.debugMode && this.currentTarget) {
-            const targetCenter = this.currentTarget.position.add(
-                new Vector2(this.currentTarget.width / 2, this.currentTarget.height / 2)
+        // Rita tower name (om debug)
+        if (this.game.inputHandler.debugMode) {
+            ctx.fillStyle = 'white'
+            ctx.font = '10px Arial'
+            ctx.fillText(
+                this.towerType.id.toUpperCase(),
+                screenX,
+                screenY - 5
             )
-            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'
-            ctx.lineWidth = 2
-            ctx.beginPath()
-            ctx.moveTo(
-                screenX + this.width / 2,
-                screenY + this.height / 2
-            )
-            ctx.lineTo(
-                targetCenter.x - offsetX,
-                targetCenter.y - offsetY
-            )
-            ctx.stroke()
         }
     }
 }
