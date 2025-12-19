@@ -1,0 +1,290 @@
+{
+  "branch24-components": [
+    {
+      "id": "comp-01",
+      "question": "Vad är den största fördelen med Component System över arv?",
+      "options": [
+        "Det är enklare att skriva",
+        "Man kan kombinera behaviors fritt",
+        "Det går snabbare att köra",
+        "Det använder mindre minne"
+      ],
+      "correctIndex": 1,
+      "explanation": "Komponenter kan kombineras fritt (t.ex. Ice + Splash tower), medan arv kräver nya klasser för varje kombination.",
+      "reward": 50,
+      "difficulty": "easy"
+    },
+    {
+      "id": "comp-02",
+      "question": "Hur får en komponent tillgång till sitt torn?",
+      "options": [
+        "Genom global variabel",
+        "Genom this.tower referens",
+        "Genom att anropa getTower()",
+        "Genom game.towers array"
+      ],
+      "correctIndex": 1,
+      "explanation": "I konstruktorn sparas 'this.tower = tower', vilket ger komponenten direkt tillgång.",
+      "reward": 50,
+      "difficulty": "medium"
+    },
+    {
+      "id": "comp-03",
+      "question": "Vilken metod anropas när en projektil från ett torn träffar en fiende?",
+      "options": [
+        "onHit()",
+        "onCollision()",
+        "onProjectileHit()",
+        "onEnemyDamage()"
+      ],
+      "correctIndex": 2,
+      "explanation": "Components kan implementera onProjectileHit() som anropas när projektilen träffar, t.ex. för splash damage eller poison.",
+      "reward": 75,
+      "difficulty": "medium"
+    },
+    {
+      "id": "comp-04",
+      "question": "I TowerTypes.js, vad innehåller components array?",
+      "options": [
+        "Component instances",
+        "Component class names som strings",
+        "Objects med type och config",
+        "Endast config objects"
+      ],
+      "correctIndex": 2,
+      "explanation": "Varje item har { type: ComponentClass, config: {...} } så Tower kan skapa component instances med rätt konfiguration.",
+      "reward": 75,
+      "difficulty": "hard"
+    },
+    {
+      "id": "comp-05",
+      "question": "Varför är Component System bättre än arv för ett stort spel?",
+      "options": [
+        "Det är alltid snabbare",
+        "Man slipper skriva kod",
+        "Det är mer flexibelt och underhållbart",
+        "Det använder mindre minne"
+      ],
+      "correctIndex": 2,
+      "explanation": "Component System ger flexibilitet (kombinera fritt), återanvändbarhet (samma komponent i flera torn) och underhållbarhet (bug-fix på ett ställe).",
+      "reward": 50,
+      "difficulty": "easy"
+    }
+  ],
+  "tower-defense-basics": [
+    {
+      "id": "td-01",
+      "question": "Vilket torn har splash damage?",
+      "options": [
+        "Cannon Tower",
+        "Ice Tower",
+        "Splash Tower",
+        "Poison Tower"
+      ],
+      "correctIndex": 2,
+      "explanation": "Splash Tower har SplashComponent som skadar alla fiender i en radie när projektilen träffar.",
+      "reward": 30,
+      "difficulty": "easy"
+    },
+    {
+      "id": "td-02",
+      "question": "Vad gör Ice Tower annorlunda än Cannon Tower?",
+      "options": [
+        "Mer skada",
+        "Längre räckvidd",
+        "Saktar ner fiender",
+        "Skjuter snabbare"
+      ],
+      "correctIndex": 2,
+      "explanation": "Ice Tower har både ShootingComponent OCH SlowComponent som saktar ner fiender i sin räckvidd.",
+      "reward": 30,
+      "difficulty": "easy"
+    },
+    {
+      "id": "td-03",
+      "question": "Hur fungerar Poison Tower?",
+      "options": [
+        "Gör mycket skada direkt",
+        "Skada över tid (DoT)",
+        "Saktar och förgiftar",
+        "Exploderar vid träff"
+      ],
+      "correctIndex": 1,
+      "explanation": "Poison Tower använder PoisonComponent som applicerar damage-over-time effekt på fiender.",
+      "reward": 40,
+      "difficulty": "easy"
+    },
+    {
+      "id": "td-04",
+      "question": "Vilka tangenter används för att välja torn?",
+      "options": [
+        "A, B, C, D",
+        "Q, W, E, R",
+        "1, 2, 3, 4",
+        "F1, F2, F3, F4"
+      ],
+      "correctIndex": 2,
+      "explanation": "Tangenterna 1-4 väljer Cannon, Ice, Splash och Poison towers.",
+      "reward": 30,
+      "difficulty": "easy"
+    },
+    {
+      "id": "td-05",
+      "question": "Vad händer när en fiende når slutet av pathen?",
+      "options": [
+        "Spelaren förlorar direkt",
+        "Spelaren förlorar 1 liv",
+        "Inget händer",
+        "Fienden vänder om"
+      ],
+      "correctIndex": 1,
+      "explanation": "När en fiende når slutet tar spelaren 1 damage (lives minskar med 1).",
+      "reward": 40,
+      "difficulty": "medium"
+    }
+  ],
+  "game-architecture": [
+    {
+      "id": "arch-01",
+      "question": "Vad är en game loop?",
+      "options": [
+        "En while(true) loop",
+        "requestAnimationFrame som uppdaterar och ritar",
+        "setInterval varje sekund",
+        "En for-loop över alla objekt"
+      ],
+      "correctIndex": 1,
+      "explanation": "Game loopen använder requestAnimationFrame för att synka med skärmens refresh rate och anropar update() och draw().",
+      "reward": 50,
+      "difficulty": "medium"
+    },
+    {
+      "id": "arch-02",
+      "question": "Varför använder vi deltaTime i update()?",
+      "options": [
+        "För att spelet ska se bättre ut",
+        "För frame-rate independent movement",
+        "För att spara minne",
+        "För att öka hastigheten"
+      ],
+      "correctIndex": 1,
+      "explanation": "deltaTime gör att objekt rör sig samma avstånd oavsett frame rate. Utan det går snabba datorer snabbare.",
+      "reward": 75,
+      "difficulty": "hard"
+    },
+    {
+      "id": "arch-03",
+      "question": "Vad gör grid-systemet i Tower Defense?",
+      "options": [
+        "Ritar rutor på skärmen",
+        "Konverterar mellan grid coordinates och world positions",
+        "Sparar torn i en array",
+        "Kollar kollisioner"
+      ],
+      "correctIndex": 1,
+      "explanation": "Grid har metoder som getCell() och worldToGrid() för att konvertera mellan grid (row/col) och världskoordinater (x/y pixels).",
+      "reward": 75,
+      "difficulty": "medium"
+    },
+    {
+      "id": "arch-04",
+      "question": "Vad är event-driven design?",
+      "options": [
+        "Kod som körs vid events (t.ex. mouseClick)",
+        "Spel som pausar vid events",
+        "Events som skapar objekt",
+        "Error handling system"
+      ],
+      "correctIndex": 0,
+      "explanation": "Event-driven design betyder att kod reagerar på events (game.events.emit/on) istället för att ständigt kolla conditions.",
+      "reward": 75,
+      "difficulty": "hard"
+    },
+    {
+      "id": "arch-05",
+      "question": "Varför separerar vi GameBase från specifika spel (TowerDefenseGame)?",
+      "options": [
+        "För att det ser proffsigt ut",
+        "För återanvändbarhet - olika speltyper delar samma bas",
+        "För att spara minne",
+        "För att öka hastigheten"
+      ],
+      "correctIndex": 1,
+      "explanation": "GameBase innehåller gemensam logik (game loop, events, input) som ALLA speltyper behöver. Varje speltyp extends GameBase.",
+      "reward": 50,
+      "difficulty": "medium"
+    }
+  ],
+  "javascript-concepts": [
+    {
+      "id": "js-01",
+      "question": "Vad gör Array.forEach()?",
+      "options": [
+        "Loopar igenom array och anropar funktion för varje element",
+        "Filtrerar array",
+        "Sorterar array",
+        "Kombinerar arrays"
+      ],
+      "correctIndex": 0,
+      "explanation": "forEach() loopar igenom alla element och kör en callback-funktion för varje element. Bra för kod-läsbarhet.",
+      "reward": 40,
+      "difficulty": "easy"
+    },
+    {
+      "id": "js-02",
+      "question": "Vad är 'this' i en klass-metod?",
+      "options": [
+        "Alltid window-objektet",
+        "Referens till class instance",
+        "Referens till metoden själv",
+        "undefined"
+      ],
+      "correctIndex": 1,
+      "explanation": "I en class method pekar 'this' på den specifika instansen av klassen, så du kan komma åt properties och andra metoder.",
+      "reward": 50,
+      "difficulty": "medium"
+    },
+    {
+      "id": "js-03",
+      "question": "Vad gör 'async' och 'await' keywords?",
+      "options": [
+        "Gör kod långsammare",
+        "Hanterar asynkrona operationer (t.ex. fetch)",
+        "Skapar nya threads",
+        "Pausar hela spelet"
+      ],
+      "correctIndex": 1,
+      "explanation": "async/await hanterar promises och asynkrona operationer (t.ex. ladda JSON) på ett läsbart sätt.",
+      "reward": 75,
+      "difficulty": "hard"
+    },
+    {
+      "id": "js-04",
+      "question": "Vad returnerar Array.filter()?",
+      "options": [
+        "true eller false",
+        "Första elementet som matchar",
+        "Ny array med element som matchar condition",
+        "Antal element som matchar"
+      ],
+      "correctIndex": 2,
+      "explanation": "filter() skapar en NY array med alla element där callback-funktionen returnerar true. Original array ändras inte.",
+      "reward": 50,
+      "difficulty": "medium"
+    },
+    {
+      "id": "js-05",
+      "question": "Vad är en callback function?",
+      "options": [
+        "En funktion som anropar sig själv",
+        "En funktion som skickas som argument till en annan funktion",
+        "En funktion som returnerar en funktion",
+        "En funktion som körs vid error"
+      ],
+      "correctIndex": 1,
+      "explanation": "En callback är en funktion som skickas som parameter och anropas senare, t.ex. setTimeout(() => {...}, 1000).",
+      "reward": 50,
+      "difficulty": "easy"
+    }
+  ]
+}

@@ -7,6 +7,8 @@ import Vector2 from './Vector2.js'
 import { TOWER_TYPES, getTowerType } from './TowerTypes.js'
 import SplashComponent from './components/SplashComponent.js'
 import PoisonComponent from './components/PoisonComponent.js'
+import QuizDialog from './quiz/QuizDialog.js'
+import QuizManager from './quiz/QuizManager.js'
 
 /**
  * TowerDefenseGame - Tower Defense spel
@@ -49,6 +51,11 @@ export default class TowerDefenseGame extends GameBase {
         this.enemiesToSpawn = 0
         this.spawnTimer = 0
         this.spawnInterval = 1000  // 1 sekund mellan varje enemy
+        
+        // Quiz system
+        this.quizManager = new QuizManager(this)
+        this.quizManager.loadQuestions('./data/questions.json')
+        this.currentQuiz = null
         
         // Temporär: Definiera path (kommer från level data senare)
         this.setupPath()
@@ -188,9 +195,50 @@ export default class TowerDefenseGame extends GameBase {
                 bonus
             })
             
-            // Starta nästa wave efter 5 sekunder
-            setTimeout(() => this.startWave(), 5000)
+            // Starta quiz istället för att direkt starta nästa wave
+            setTimeout(() => this.startQuiz(), 2000)
         }
+    }
+    
+    /**
+     * Starta quiz mellan waves
+     */
+    startQuiz() {
+        // Pausa spelet
+        this.gameState = 'QUIZ'
+        
+        // Bestäm difficulty baserat på wave number
+        let difficulty = 'easy'
+        if (this.wave > 5) {
+            difficulty = 'hard'
+        } else if (this.wave > 2) {
+            difficulty = 'medium'
+        }
+        
+        // Hämta 3 random frågor
+        const questions = this.quizManager.getRandomQuestions(3, difficulty)
+        
+        // Om inga frågor finns, skippa quiz
+        if (questions.length === 0) {
+            console.warn('No questions available, skipping quiz')
+            this.gameState = 'PLAYING'
+            setTimeout(() => this.startWave(), 2000)
+            return
+        }
+        
+        // Skapa quiz dialog
+        this.currentQuiz = new QuizDialog(this, questions, (totalGold) => {
+            // Quiz färdigt - ge gold och fortsätt
+            this.gold += totalGold
+            console.log(`Quiz complete! Earned ${totalGold} gold`)
+            
+            // Tillbaka till spel
+            this.gameState = 'PLAYING'
+            this.currentQuiz = null
+            
+            // Starta nästa wave efter kort delay
+            setTimeout(() => this.startWave(), 2000)
+        })
     }
     
     /**
@@ -281,6 +329,12 @@ export default class TowerDefenseGame extends GameBase {
      * @param {number} deltaTime - Tid sedan förra frame
      */
     update(deltaTime) {
+        // Om quiz är aktivt, uppdatera bara quiz
+        if (this.gameState === 'QUIZ' && this.currentQuiz) {
+            this.currentQuiz.update(deltaTime)
+            return
+        }
+        
         // Hantera tower selection med number keys
         if (this.inputHandler.keys.has('1')) {
             this.selectTowerType('CANNON')
@@ -505,6 +559,11 @@ export default class TowerDefenseGame extends GameBase {
         
         // Rita UI
         this.drawUI(ctx)
+        
+        // Rita quiz överst om aktivt
+        if (this.gameState === 'QUIZ' && this.currentQuiz) {
+            this.currentQuiz.draw(ctx)
+        }
     }
     
     /**
