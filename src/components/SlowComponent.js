@@ -41,7 +41,10 @@ export default class SlowComponent extends Component {
             new Vector2(this.tower.width / 2, this.tower.height / 2)
         )
         
-        this.game.enemies.forEach(enemy => {
+        // Get enemies from waveManager instead of game.enemies
+        const enemies = this.game.waveManager ? this.game.waveManager.getEnemies() : []
+        
+        enemies.forEach(enemy => {
             if (enemy.health <= 0 || enemy.markedForDeletion) return
             
             const distance = center.distanceTo(enemy.position)

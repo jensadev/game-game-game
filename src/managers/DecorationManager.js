@@ -117,7 +117,10 @@ export default class DecorationManager {
      */
     setupStaticDecorations() {
         const decoCount = 15
-        const allDecorations = [...decorations.rocks, ...decorations.bushes]
+        const allDecorations = [
+            ...(decorations.rocks || []),
+            ...(decorations.bushes || [])
+        ]
         
         for (let i = 0; i < decoCount; i++) {
             let row, col

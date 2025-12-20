@@ -53,7 +53,10 @@ export default class ShootingComponent extends Component {
             new Vector2(this.tower.width / 2, this.tower.height / 2)
         )
         
-        this.game.enemies.forEach(enemy => {
+        // Get enemies from waveManager instead of game.enemies
+        const enemies = this.game.waveManager ? this.game.waveManager.getEnemies() : []
+        
+        enemies.forEach(enemy => {
             if (enemy.health <= 0 || enemy.markedForDeletion) return
             
             const distance = center.distanceTo(enemy.position)
@@ -98,13 +101,12 @@ export default class ShootingComponent extends Component {
             markedForDeletion: false
         }
         
-        this.game.projectiles.push(projectile)
-        
-        // Emit event
+        // Emit event with projectile - ProjectileManager listens to this
         this.game.events.emit('towerShoot', {
             tower: this.tower,
             target,
-            position: center.clone()
+            position: center.clone(),
+            projectile: projectile
         })
     }
     

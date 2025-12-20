@@ -29,9 +29,9 @@ import rock1 from './assets/Tiny Swords/Terrain/Decorations/Rocks/Rock1.png'
 import rock2 from './assets/Tiny Swords/Terrain/Decorations/Rocks/Rock2.png'
 import rock3 from './assets/Tiny Swords/Terrain/Decorations/Rocks/Rock3.png'
 import rock4 from './assets/Tiny Swords/Terrain/Decorations/Rocks/Rock4.png'
-import bush1 from './assets/Tiny Swords/Terrain/Decorations/Bushes/Bushe1.png'
-import bush2 from './assets/Tiny Swords/Terrain/Decorations/Bushes/Bushe2.png'
-import bush3 from './assets/Tiny Swords/Terrain/Decorations/Bushes/Bushe3.png'
+// import bush1 from './assets/Tiny Swords/Terrain/Decorations/Bushes/Bushe1.png'
+// import bush2 from './assets/Tiny Swords/Terrain/Decorations/Bushes/Bushe2.png'
+// import bush3 from './assets/Tiny Swords/Terrain/Decorations/Bushes/Bushe3.png'
 
 // Ground tiles
 import groundFlat from './assets/Tiny Swords/Terrain/Ground/Tilemap_Flat.png'
@@ -55,7 +55,7 @@ export const decorations = {
     clouds: [cloud1, cloud2, cloud3, cloud4],
     trees: [tree1, tree2],
     rocks: [rock1, rock2, rock3, rock4],
-    bushes: [bush1, bush2, bush3]
+    // bushes: [bush1, bush2, bush3]
 }
 
 export const ground = {
@@ -76,7 +76,7 @@ export const PRELOAD_ASSETS = [
     ...decorations.clouds,
     ...decorations.trees,
     ...decorations.rocks,
-    ...decorations.bushes,
+    // ...decorations.bushes,
     // Ground
     ...Object.values(ground),
     // Enemies

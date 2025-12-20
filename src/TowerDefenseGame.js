@@ -72,10 +72,10 @@ export default class TowerDefenseGame extends GameBase {
         this.camera = new Camera(0, 0, this.canvas.width, this.canvas.height)
         
         // Setup path for enemies
-        this.setupPath()
+        const pathCoords = this.setupPath()
 
         // Initialize managers
-        this.waveManager = new WaveManager(this, this.grid.pathToWorld(this.grid.path))
+        this.waveManager = new WaveManager(this, this.grid.pathToWorld(pathCoords))
         this.towerManager = new TowerManager(this, this.grid)
         this.decorationManager = new DecorationManager(this, this.grid)
         this.projectileManager = new ProjectileManager(this)
@@ -121,6 +121,9 @@ export default class TowerDefenseGame extends GameBase {
 
         // Mark path in grid
         this.grid.setPath(pathCoords)
+        
+        // Return path coords for use by managers
+        return pathCoords
     }
     
     /**
@@ -262,7 +265,9 @@ export default class TowerDefenseGame extends GameBase {
         }
 
         // Update decorations
-        this.decorationManager.update(deltaTime)
+        if (this.decorationManager) {
+            this.decorationManager.update(deltaTime)
+        }
 
         // Handle tower selection via keyboard
         if (this.inputHandler.keys.has('1')) {
@@ -311,8 +316,20 @@ export default class TowerDefenseGame extends GameBase {
 
         // Show loading screen if assets not loaded
         if (!this.assetsLoaded) {
-            this.stateManager.setState('LOADING')
-            this.ui.draw(ctx)
+            // StateManager might not be initialized yet
+            if (this.stateManager) {
+                this.stateManager.setState('LOADING')
+            }
+            if (this.ui) {
+                this.ui.draw(ctx)
+            } else {
+                // Fallback loading screen
+                ctx.fillStyle = 'white'
+                ctx.font = '32px Arial'
+                ctx.textAlign = 'center'
+                ctx.fillText('Loading...', this.canvas.width / 2, this.canvas.height / 2)
+                ctx.textAlign = 'left'
+            }
             return
         }
 
@@ -324,8 +341,10 @@ export default class TowerDefenseGame extends GameBase {
         this.grid.draw(ctx, this.camera, true)
 
         // Draw decorations (castle, trees, etc.) - background layer
-        this.decorationManager.drawCastle(ctx, this.camera)
-        this.decorationManager.drawDecorations(ctx, this.camera)
+        if (this.decorationManager) {
+            this.decorationManager.drawCastle(ctx, this.camera)
+            this.decorationManager.drawDecorations(ctx, this.camera)
+        }
 
         // Draw tower placement preview
         if (this.stateManager.isPlaying()) {
@@ -347,7 +366,9 @@ export default class TowerDefenseGame extends GameBase {
         this.projectileManager.draw(ctx, this.camera)
 
         // Draw clouds (top layer)
-        this.decorationManager.drawClouds(ctx)
+        if (this.decorationManager) {
+            this.decorationManager.drawClouds(ctx)
+        }
 
         // Draw UI (HUD, loading screen, etc.)
         this.ui.draw(ctx)

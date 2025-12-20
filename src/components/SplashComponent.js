@@ -102,7 +102,10 @@ export default class SplashComponent extends Component {
     findEnemiesInRange(center, radius) {
         const enemies = []
         
-        this.game.enemies.forEach(enemy => {
+        // Get enemies from waveManager instead of game.enemies
+        const allEnemies = this.game.waveManager ? this.game.waveManager.getEnemies() : []
+        
+        allEnemies.forEach(enemy => {
             if (enemy.health <= 0 || enemy.markedForDeletion) return
             
             const distance = center.distanceTo(enemy.position)
