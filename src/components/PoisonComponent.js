@@ -10,6 +10,7 @@ import Vector2 from '../Vector2.js'
 export default class PoisonComponent extends Component {
     constructor(tower, config = {}) {
         super(tower)
+        this.tower = this.owner  // Alias for tower-specific behavior
         
         this.poisonDuration = config.poisonDuration || 5000   // 5 sekunder
         this.poisonDamage = config.poisonDamage || 10         // Per tick

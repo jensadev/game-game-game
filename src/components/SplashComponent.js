@@ -10,6 +10,7 @@ import Vector2 from '../Vector2.js'
 export default class SplashComponent extends Component {
     constructor(tower, config = {}) {
         super(tower)
+        this.tower = this.owner  // Alias for tower-specific behavior
         
         this.splashRadius = config.splashRadius || 80
         this.splashDamagePercent = config.splashDamagePercent || 0.5  // 50% av main damage

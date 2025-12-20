@@ -10,6 +10,7 @@ import Vector2 from '../Vector2.js'
 export default class SlowComponent extends Component {
     constructor(tower, config = {}) {
         super(tower)
+        this.tower = this.owner  // Alias for tower-specific behavior
         
         this.range = config.range || 150
         this.slowAmount = config.slowAmount || 0.5  // 50% slower

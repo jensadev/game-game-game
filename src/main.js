@@ -2,43 +2,40 @@ import './style.css'
 import TowerDefenseGame from './TowerDefenseGame.js'
 
 const setupGame = (canvas) => {
-    // Sätt storlek på canvas för tower defense (960x640 för 15x10 grid med 64px tiles)
+    // Set canvas size for tower defense (960x640 for 15x10 grid with 64px tiles)
     canvas.width = 960
     canvas.height = 640
-    // ctx är "ritkontexten", används för att rita på canvas
+    
+    // Get context for drawing
     const ctx = canvas.getContext('2d')
 
-    // Skapa tower defense-spelet
+    // Create tower defense game
     const game = new TowerDefenseGame(canvas)
     let lastTime = 0
-    // Game loop variabel så att vi kan stoppa den senare om vi vill
     let gameLoop
 
     const runGame = (timeStamp) => {
-        // Förhindra för stora deltaTime värden (första frame, tab-switch, etc)
+        // Prevent large deltaTime values (first frame, tab-switch, etc.)
         if (lastTime === 0) {
             lastTime = timeStamp
         }
         const deltaTime = timeStamp - lastTime
         lastTime = timeStamp
         
-        // Säkerhets-cap för deltaTime (max 100ms)
+        // Cap deltaTime (max 100ms)
         const cappedDeltaTime = Math.min(deltaTime, 100)
         
-        // Rensa canvas (görs i game.draw() för tower defense)
-        // ctx.clearRect(0, 0, canvas.width, canvas.height)
-        
-        // Uppdatera och rita
+        // Update and draw
         game.update(cappedDeltaTime)
         game.draw(ctx)
         
-        // Kör nästa frame
+        // Run next frame
         gameLoop = requestAnimationFrame(runGame)
     }
     
-    // Starta game loop
+    // Start game loop
     gameLoop = requestAnimationFrame(runGame)
 }
 
-// Kör igång spelet
+// Start the game
 setupGame(document.querySelector('#game'))

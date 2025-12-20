@@ -1,5 +1,7 @@
 import GameObject from './GameObject.js'
 import Vector2 from './Vector2.js'
+import SpriteComponent from './components/SpriteComponent.js'
+import { enemies } from './assets.js'
 
 /**
  * Enemy - Fiende som följer en path
@@ -16,7 +18,7 @@ export default class Enemy extends GameObject {
     constructor(game, path, config = {}) {
         // Starta på första waypoint
         const start = path[0]
-        super(game, start.x, start.y, 32, 32)
+        super(game, start.x, start.y, 64, 64)  // Increased to 64x64 to match grid
         
         // Path följning
         this.path = path
@@ -43,6 +45,30 @@ export default class Enemy extends GameObject {
         this.color = config.color || 'red'
         this.healthBarColor = 'lime'
         this.healthBarBg = 'darkred'
+        
+        // Add SpriteComponent for goblin animation
+        // Sprite is 1344x960, 7 cols × 5 rows, frame 192x192
+        // Row 1 (index 0) has 6 frames for movement
+        const spriteComponent = new SpriteComponent(this, {
+            sprites: {
+                walk: {
+                    image: enemies.goblinPurple,
+                    frames: 6,
+                    frameInterval: 100,
+                    spriteSheet: {
+                        cols: 7,
+                        rows: 5,
+                        frameWidth: 192,
+                        frameHeight: 192,
+                        row: 0  // Row 1 for movement
+                    }
+                }
+            },
+            defaultAnimation: 'walk',
+            scale: 0.42,  // Scale 192x192 to ~80x80 (fits well with 64x64 hitbox)
+            offsetY: -8   // Slight offset to anchor better
+        })
+        this.addComponent(spriteComponent)
         
         // State
         this.reachedEnd = false
@@ -84,6 +110,13 @@ export default class Enemy extends GameObject {
             // Nått waypoint - gå vidare till nästa
             this.currentWaypoint++
         }
+        
+        // Update components (sprite animation)
+        this.components.forEach(component => {
+            if (component.update) {
+                component.update(deltaTime)
+            }
+        })
     }
     
     /**
@@ -148,24 +181,36 @@ export default class Enemy extends GameObject {
         const screenX = this.position.x - offsetX
         const screenY = this.position.y - offsetY
         
-        // Rita enemy body
-        ctx.fillStyle = this.color
-        ctx.fillRect(
-            screenX - this.width / 2,  // Center på position
-            screenY - this.height / 2,
-            this.width,
-            this.height
-        )
+        // Draw sprite via components first
+        let spriteDrawn = false
+        this.components.forEach(component => {
+            if (component.draw) {
+                component.draw(ctx, camera)
+                spriteDrawn = true
+            }
+        })
         
-        // Rita enemy outline
-        ctx.strokeStyle = 'darkred'
-        ctx.lineWidth = 2
-        ctx.strokeRect(
-            screenX - this.width / 2,
-            screenY - this.height / 2,
-            this.width,
-            this.height
-        )
+        // Fallback if no sprite component drew
+        if (!spriteDrawn) {
+            // Fallback: Rita enemy body
+            ctx.fillStyle = this.color
+            ctx.fillRect(
+                screenX - this.width / 2,  // Center på position
+                screenY - this.height / 2,
+                this.width,
+                this.height
+            )
+            
+            // Rita enemy outline
+            ctx.strokeStyle = 'darkred'
+            ctx.lineWidth = 2
+            ctx.strokeRect(
+                screenX - this.width / 2,
+                screenY - this.height / 2,
+                this.width,
+                this.height
+            )
+        }
         
         // Rita health bar
         const healthBarWidth = this.width

@@ -2,6 +2,8 @@ import ShootingComponent from './components/ShootingComponent.js'
 import SlowComponent from './components/SlowComponent.js'
 import SplashComponent from './components/SplashComponent.js'
 import PoisonComponent from './components/PoisonComponent.js'
+import SpriteComponent from './components/SpriteComponent.js'
+import { towers } from './assets.js'
 
 /**
  * TowerTypes - Konfiguration för olika tower types
@@ -23,6 +25,17 @@ export const TOWER_TYPES = {
         barrelColor: 'darkblue',
         components: [
             {
+                type: SpriteComponent,
+                config: {
+                    sprites: {
+                        idle: { image: towers.black, frames: 1 }
+                    },
+                    defaultAnimation: 'idle',
+                    scale: 0.5,      // Scale 128x256 down to 64x128
+                    offsetY: -16     // Anchor at bottom of grid square
+                }
+            },
+            {
                 type: ShootingComponent,
                 config: {
                     damage: 50,
@@ -43,6 +56,17 @@ export const TOWER_TYPES = {
         color: 'lightblue',
         barrelColor: 'blue',
         components: [
+            {
+                type: SpriteComponent,
+                config: {
+                    sprites: {
+                        idle: { image: towers.blue, frames: 1 }
+                    },
+                    defaultAnimation: 'idle',
+                    scale: 0.5,      // Scale 128x256 down to 64x128
+                    offsetY: -16     // Anchor at bottom of grid square
+                }
+            },
             {
                 type: ShootingComponent,
                 config: {
@@ -74,6 +98,17 @@ export const TOWER_TYPES = {
         barrelColor: 'darkorange',
         components: [
             {
+                type: SpriteComponent,
+                config: {
+                    sprites: {
+                        idle: { image: towers.red, frames: 1 }
+                    },
+                    defaultAnimation: 'idle',
+                    scale: 0.5,
+                    offsetY: -16
+                }
+            },
+            {
                 type: ShootingComponent,
                 config: {
                     damage: 40,
@@ -101,6 +136,17 @@ export const TOWER_TYPES = {
         color: 'green',
         barrelColor: 'darkgreen',
         components: [
+            {
+                type: SpriteComponent,
+                config: {
+                    sprites: {
+                        idle: { image: towers.purple, frames: 1 }
+                    },
+                    defaultAnimation: 'idle',
+                    scale: 0.5,
+                    offsetY: -16
+                }
+            },
             {
                 type: ShootingComponent,
                 config: {

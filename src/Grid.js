@@ -19,11 +19,14 @@ export default class Grid {
      * @param {number} rows - Antal rader
      * @param {number} cols - Antal kolumner
      * @param {number} tileSize - Storlek på varje tile i pixels
+     * @param {string} [groundTexture=null] - Optional ground texture URL
      */
-    constructor(rows, cols, tileSize) {
+    constructor(rows, cols, tileSize, groundTexture = null) {
         this.rows = rows
         this.cols = cols
         this.tileSize = tileSize
+        this.groundTexture = groundTexture
+        this.groundImage = null
         this.cells = []
         
         // Skapa 2D-array av cells
@@ -129,6 +132,27 @@ export default class Grid {
     }
     
     /**
+     * Kolla om en cell är en path
+     * @param {number} row - Grid row
+     * @param {number} col - Grid column
+     * @returns {boolean}
+     */
+    isPath(row, col) {
+        if (!this.isInBounds(row, col)) {
+            return false
+        }
+        return this.cells[row][col].type === 'path'
+    }
+    
+    /**
+     * Set ground texture for grid rendering
+     * @param {Image} image - Loaded ground texture image
+     */
+    setGroundTexture(image) {
+        this.groundImage = image
+    }
+    
+    /**
      * Placera torn i grid
      * @param {number} row - Grid row
      * @param {number} col - Grid column
@@ -221,6 +245,64 @@ export default class Grid {
     draw(ctx, camera = null, showPath = true) {
         const offsetX = camera ? camera.position.x : 0
         const offsetY = camera ? camera.position.y : 0
+        
+        // Rita ground tiles om texture finns
+        if (this.groundImage && this.groundImage.complete) {
+            // Tilemap_Flat.png är 128x80 (but we'll treat it as having border tiles)
+            // Tile size in source image
+            const srcSize = 64
+            
+            for (let row = 0; row < this.rows; row++) {
+                for (let col = 0; col < this.cols; col++) {
+                    const worldPos = this.getWorldPosition(row, col)
+                    
+                    // Determine which tile to use based on position
+                    let srcX, srcY
+                    
+                    // Top border
+                    if (row === 0) {
+                        if (col === 0) {
+                            srcX = 0; srcY = 0  // Upper left corner
+                        } else if (col === this.cols - 1) {
+                            srcX = 128; srcY = 0  // Upper right corner
+                        } else {
+                            srcX = 64; srcY = 0  // Upper middle
+                        }
+                    }
+                    // Bottom border
+                    else if (row === this.rows - 1) {
+                        if (col === 0) {
+                            srcX = 0; srcY = 128  // Lower left corner
+                        } else if (col === this.cols - 1) {
+                            srcX = 128; srcY = 128  // Lower right corner
+                        } else {
+                            srcX = 64; srcY = 128  // Lower middle
+                        }
+                    }
+                    // Middle rows (left/right borders or center)
+                    else {
+                        if (col === 0) {
+                            srcX = 0; srcY = 64  // Left edge
+                        } else if (col === this.cols - 1) {
+                            srcX = 128; srcY = 64  // Right edge
+                        } else {
+                            srcX = 64; srcY = 64  // Center fill
+                        }
+                    }
+                    
+                    // Rita ground tile
+                    ctx.drawImage(
+                        this.groundImage,
+                        srcX, srcY,            // Source X, Y
+                        srcSize, srcSize,      // Source Width, Height
+                        worldPos.x - offsetX,
+                        worldPos.y - offsetY,
+                        this.tileSize,
+                        this.tileSize
+                    )
+                }
+            }
+        }
         
         // Rita grid lines (mer synliga)
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'

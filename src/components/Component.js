@@ -1,5 +1,5 @@
 /**
- * Component - Base class för alla tower components
+ * Component - Base class för alla GameObject components
  * 
  * Component pattern tillåter oss att bygga komplexa behaviors
  * genom att kombinera små, återanvändbara delar.
@@ -8,11 +8,11 @@
  */
 export default class Component {
     /**
-     * @param {Tower} tower - Det torn som äger denna component
+     * @param {GameObject} owner - Det GameObject som äger denna component
      */
-    constructor(tower) {
-        this.tower = tower
-        this.game = tower.game
+    constructor(owner) {
+        this.owner = owner
+        this.game = owner.game
         this.enabled = true
     }
     

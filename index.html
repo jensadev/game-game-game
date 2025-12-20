@@ -1,33 +1,49 @@
 <!doctype html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>game-game-game</title>
-  </head>
-  <body>
+</head>
+
+<body>
     <div id="app">
-      <canvas id="game">If you see this text your browser is old or javascript is disabled.</canvas>
+        <canvas id="game">If you see this text your browser is old or javascript is disabled.</canvas>
     </div>
-    
+
     <!-- Quiz Dialog Template -->
     <template id="quiz-dialog-template">
-      <div id="quiz-dialog-overlay">
-        <div id="quiz-dialog" class="flow">
-          <h2 id="quiz-title">Quiz Time!</h2>
-          <p id="quiz-question"></p>
-          <ul id="quiz-options" class="flow"></ul>
-          <div id="quiz-result" class="hidden flow">
-            <p id="result-text"></p>
-            <p id="result-explanation"></p>
-            <p id="result-reward"></p>
-            <button class="continue-button button">Continue</button>
-          </div>
+        <div id="quiz-dialog-overlay">
+            <div id="quiz-dialog" class="flow">
+                <h2 id="quiz-title">Quiz Time!</h2>
+                <p id="quiz-question"></p>
+                <ul id="quiz-options" class="flow"></ul>
+                <div id="quiz-result" class="hidden flow">
+                    <p id="result-text"></p>
+                    <p id="result-explanation"></p>
+                    <p id="result-reward"></p>
+                    <button class="continue-button button">Continue</button>
+                </div>
+            </div>
         </div>
-      </div>
     </template>
-    
+
+    <!-- Tower Selection UI -->>
+    <ul id="tower-list" class="tower-selection"></ul>
+
+    <template id="tower-template">
+        <li class="tower-option">
+            <div class="tower-icon"></div>
+            <div class="tower-info">
+                <span class="tower-name"></span>
+                <span class="tower-cost"></span>
+            </div>
+        </li>
+    </template>
+
     <script type="module" src="/src/main.js"></script>
-  </body>
+</body>
+
 </html>

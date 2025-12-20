@@ -9,6 +9,9 @@ export default class GameObject {
         this.height = height
         this.markedForDeletion = false
         
+        // Component system
+        this.components = []
+        
         // Animation properties (optional - används endast om subklasser har sprites)
         this.animations = null
         this.currentAnimation = null
@@ -16,6 +19,39 @@ export default class GameObject {
         this.frameTimer = 0
         this.frameInterval = 100 // millisekunder per frame
         this.spriteLoaded = false
+    }
+    
+    /**
+     * Add a component to this GameObject
+     * @param {Component} component - Component instance
+     */
+    addComponent(component) {
+        this.components.push(component)
+        if (component.onAdd) {
+            component.onAdd()
+        }
+    }
+    
+    /**
+     * Remove a component
+     * @param {Component} component - Component to remove
+     */
+    removeComponent(component) {
+        const index = this.components.indexOf(component)
+        if (index !== -1) {
+            if (component.onRemove) {
+                component.onRemove()
+            }
+            this.components.splice(index, 1)
+        }
+    }
+    
+    /**
+     * Get component by type
+     * @param {Class} ComponentClass - Component class to find
+     */
+    getComponent(ComponentClass) {
+        return this.components.find(c => c instanceof ComponentClass)
     }
 
     draw(ctx, camera = null) {

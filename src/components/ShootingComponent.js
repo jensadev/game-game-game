@@ -10,6 +10,7 @@ import Vector2 from '../Vector2.js'
 export default class ShootingComponent extends Component {
     constructor(tower, config = {}) {
         super(tower)
+        this.tower = this.owner  // Alias for tower-specific behavior
         
         // Shooting stats (kan overridas av config)
         this.damage = config.damage || 50
