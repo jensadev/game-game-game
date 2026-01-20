@@ -3,6 +3,7 @@ import Player from './Player.js'
 import Projectile from './Projectile.js'
 import Level1 from './levels/Level1.js'
 import Level2 from './levels/Level2.js'
+import Level3 from './levels/Level3.js'
 import MainMenu from './menus/MainMenu.js'
 import SaveGameManager from './SaveGameManager.js'
 
@@ -17,7 +18,7 @@ export default class PlatformerGame extends GameBase {
         
         // Plattformsspel behöver en större värld för sidoscrolling
         this.worldWidth = width * 3
-        this.worldHeight = height
+        this.worldHeight = height * 3
         this.camera.setWorldBounds(this.worldWidth, this.worldHeight)
         
         // Plattformsspel-specifik fysik
@@ -30,7 +31,7 @@ export default class PlatformerGame extends GameBase {
         
         // Level management
         this.currentLevelIndex = 0
-        this.levels = [Level1, Level2] // Array av level-klasser
+        this.levels = [Level1, Level2, Level3] // Array av level-klasser
         this.currentLevel = null
         
         // Plattformsspel-specifika arrays
@@ -127,8 +128,8 @@ export default class PlatformerGame extends GameBase {
         this.gameState = 'PLAYING'
     }
     
-    addProjectile(x, y, directionX) {
-        const projectile = new Projectile(this, x, y, directionX)
+    addProjectile(x, y, directionX, owner = null, directionY = 0) {
+        const projectile = new Projectile(this, x, y, directionX, owner, directionY)
         this.projectiles.push(projectile)
     }
     
@@ -305,14 +306,20 @@ export default class PlatformerGame extends GameBase {
         this.projectiles.forEach(projectile => {
             projectile.update(deltaTime)
             
-            // Kolla kollision med fiender
+            // Kolla kollision med fiender (spelare skjuter)
             this.enemies.forEach(enemy => {
-                if (projectile.intersects(enemy) && !enemy.markedForDeletion) {
+                if (projectile.intersects(enemy) && !enemy.markedForDeletion && projectile.owner !== enemy) {
                     enemy.markedForDeletion = true
                     projectile.markedForDeletion = true
                     this.score += enemy.points || 50 // Använd enemy.points om det finns, annars 50
                 }
             })
+            
+            // Kolla kollision med spelaren (fiender skjuter)
+            if (projectile.intersects(this.player) && projectile.owner !== this.player) {
+                this.player.takeDamage(1)
+                projectile.markedForDeletion = true
+            }
             
             // Kolla projektil-kollision med plattformar (plattformsspel-specifikt)
             this.platforms.forEach(platform => {

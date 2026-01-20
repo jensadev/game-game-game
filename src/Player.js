@@ -23,7 +23,7 @@ export default class Player extends GameObject {
         this.isGrounded = false // om spelaren står på marken
         
         // Health system
-        this.maxHealth = 3
+        this.maxHealth = 1
         this.health = this.maxHealth
         this.invulnerable = false // Immun mot skada efter att ha blivit träffad
         this.invulnerableTimer = 0
@@ -128,7 +128,7 @@ export default class Player extends GameObject {
         const projectileX = this.x + this.width / 2
         const projectileY = this.y + this.height / 2
         
-        this.game.addProjectile(projectileX, projectileY, this.lastDirectionX)
+        this.game.addProjectile(projectileX, projectileY, this.lastDirectionX, this)
         
         // Sätt cooldown
         this.canShoot = false

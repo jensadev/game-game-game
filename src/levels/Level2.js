@@ -42,7 +42,7 @@ export default class Level2 extends Level {
                 tileHeight: 101,
                 tileY: false,
                 scrollSpeed: 0.6,
-                yPosition: this.game.height - 141,
+                yPosition: 339,
                 height: 101
             })
         ]

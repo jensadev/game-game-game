@@ -9,26 +9,38 @@ export default class Enemy extends GameObject {
         this.velocityX = 0
         this.velocityY = 0
         this.isGrounded = false
+        this.useGravity = false // Stäng av gravitation för denne enemy
         
         // Patrol AI
         this.startX = x
         this.patrolDistance = patrolDistance
         this.endX = patrolDistance !== null ? x + patrolDistance : null
         this.speed = 0.1
-        this.direction = 1 // 1 = höger, -1 = vänster
+        this.direction = 0// 1 = höger, -1 = vänster
         
         this.damage = 1 // Hur mycket skada fienden gör
+        
+        // Shooting system
+        this.canShoot = true
+        this.shootCooldown = 500 // millisekunder mellan skott
+        this.shootCooldownTimer = 0
 
     }
 
     update(deltaTime) {
-        // Applicera gravitation
-        this.velocityY += this.game.gravity * deltaTime
-        
-        // Applicera luftmotstånd
-        if (this.velocityY > 0) {
-            this.velocityY -= this.game.friction * deltaTime
-            if (this.velocityY < 0) this.velocityY = 0
+        // Applicera gravitation (om enabled)
+        if (this.useGravity) {
+            this.velocityY += this.game.gravity * deltaTime
+            
+            // Applicera luftmotstånd
+            if (this.velocityY > 0) {
+                this.velocityY -= this.game.friction * deltaTime
+                if (this.velocityY < 0) this.velocityY = 0
+            }
+        } else {
+            // Ingen gravitation - resetera Y-hastigheten
+            this.velocityY = 0
+            this.isGrounded = true // Alltid "på marken" utan gravitation
         }
         
         // Patruller när på marken
@@ -38,10 +50,10 @@ export default class Enemy extends GameObject {
             // Om vi har en patrolldistans, vänd vid ändpunkter
             if (this.patrolDistance !== null) {
                 if (this.x >= this.endX) {
-                    this.direction = -1
+                    this.direction = 0
                     this.x = this.endX
                 } else if (this.x <= this.startX) {
-                    this.direction = 1
+                    this.direction = 0
                     this.x = this.startX
                 }
             }
@@ -53,6 +65,19 @@ export default class Enemy extends GameObject {
         // Uppdatera position
         this.x += this.velocityX * deltaTime
         this.y += this.velocityY * deltaTime
+        
+        // Uppdatera shoot cooldown
+        if (!this.canShoot) {
+            this.shootCooldownTimer -= deltaTime
+            if (this.shootCooldownTimer <= 0) {
+                this.canShoot = true
+            }
+        }
+        
+        // Skjut kontinuerligt
+        if (this.canShoot) {
+            this.shoot()
+        }
     }
 
     handlePlatformCollision(platform) {
@@ -98,6 +123,20 @@ export default class Enemy extends GameObject {
             }
         }
     }
+    
+    shoot() {
+        // Skjut neråt
+        const projectileX = this.x + this.width / 2
+        const projectileY = this.y + this.height / 2
+        
+        this.game.addProjectile(projectileX, projectileY, 0, this, 1)
+        //                                               ↑        ↑
+        //                                        Horisontell  Vertikal (1 = ner)
+        
+        // Sätt cooldown
+        this.canShoot = false
+        this.shootCooldownTimer = this.shootCooldown
+    }
 
     draw(ctx, camera = null) {
         // Beräkna screen position (om camera finns)
@@ -109,3 +148,4 @@ export default class Enemy extends GameObject {
         ctx.fillRect(screenX, screenY, this.width, this.height)
     }
 }
+
