@@ -1,9 +1,11 @@
+import Vector2 from './Vector2.js'
+
 // Basklass för alla objekt i spelet
 export default class GameObject {
     constructor(game, x = 0, y = 0, width = 0, height = 0) {
         this.game = game // referens till spelet
-        this.x = x
-        this.y = y
+        this.position = new Vector2(x, y)
+        // Keep x/y as getters for backwards compatibility
         this.width = width
         this.height = height
         this.markedForDeletion = false
@@ -16,6 +18,13 @@ export default class GameObject {
         this.frameInterval = 100 // millisekunder per frame
         this.spriteLoaded = false
     }
+    
+    // Getters and setters for backwards compatibility
+    get x() { return this.position.x }
+    set x(value) { this.position.x = value }
+    
+    get y() { return this.position.y }
+    set y(value) { this.position.y = value }
 
     draw(ctx, camera = null) {
         // Gör inget, implementera i subklasser

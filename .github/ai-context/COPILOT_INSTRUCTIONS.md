@@ -2,6 +2,118 @@
 
 This document provides comprehensive context for AI assistants (GitHub Copilot, etc.) working on this educational game engine codebase.
 
+## Working with AI Assistants
+
+### Document Maintenance Requirements
+
+**MANDATORY**: When making changes to code, you MUST:
+
+1. **Update the plan document** with progress checkmarks (✅)
+2. **Update architecture documents** if design changes occur
+3. **Document reasoning** for significant decisions
+4. **Track deviations** from original plan with explanation
+
+### Context Loss Prevention
+
+**Before each major change:**
+1. Review relevant plan document in `.github/ai-context/plans/`
+2. Review architecture document in `.github/ai-context/architecture/`
+3. Check this file (COPILOT_INSTRUCTIONS.md) for project principles
+4. Read AGENT_INSTRUCTIONS.md for implementation protocols
+
+**After each major change:**
+1. Update plan document with ✅ completed items
+2. Add "Decisions Made" entry if deviating from plan
+3. Update architecture doc if design changed
+4. Commit changes with descriptive message
+
+**Signs you've lost context:**
+- Implementing features not in the current plan
+- Using GameObject when should use Entity
+- Adding external dependencies without checking project philosophy
+- Forgetting about separation of concerns (collision in entities)
+- Not updating documentation after changes
+- Repeating previously discussed topics
+
+**Recovery steps:**
+1. Stop implementation immediately
+2. Re-read the relevant plan document completely
+3. Re-read architecture document completely
+4. Verify current approach matches documented decisions
+5. Summarize understanding back to user
+6. Resume with corrected understanding
+
+### Token Budget Awareness
+
+- Token usage appears in system warnings (check after each response)
+- When approaching 500K tokens, prepare for context switch
+- Update all documents before switching contexts
+- Create handoff summary (see CONTEXT_MANAGEMENT.md)
+- Commit all changes before switching
+
+### Plan Adherence Protocol
+
+Plans are **living documents**. When you need to deviate:
+
+1. **STOP** implementation
+2. Explain deviation to user: "Plan says X, but I think Y because..."
+3. Get explicit approval
+4. Document WHY in plan's "Decisions Made" section
+5. Update "Deviations from Original Plan" section
+6. Adjust future steps in plan if needed
+
+**DON'T** silently deviate. **DO** explain reasoning.
+
+### Implementation Protocol
+
+**Before Starting Each Implementation Step:**
+
+1. **Read the current plan** (`.github/ai-context/plans/[current].md`)
+2. **Identify current step** (e.g., "Step 3.2: Migrate Enemy")
+3. **Read architecture reference** for that component/system
+4. **State your understanding** back to user with:
+   - What you're going to do
+   - Which files you'll modify/create
+   - How you'll verify it works
+   - What documentation you'll update
+5. **Get confirmation** before proceeding
+
+**During Implementation (Every 3-5 file changes):**
+
+- ✅ Check progress against plan
+- ✅ Update plan document with checkmarks
+- ✅ Verify you're not deviating from architecture
+- ✅ Document any decisions made
+
+**If you need to deviate:**
+
+- ⚠️ STOP and explain to user
+- ⚠️ Get approval
+- ⚠️ Document in plan's "Decisions Made" section
+- ⚠️ Update architecture doc if design changes
+
+**After Completing a Step:**
+
+1. **Mark complete** in plan with ✅
+2. **Update "Implementation Log"** with session notes
+3. **Update "Progress Tracking"** section
+4. **Commit changes** with clear message referencing plan step
+5. **Verify next step** before proceeding
+6. **Summarize** what was done and what's next
+
+### Reference Documents
+
+**For context management:**
+- `.github/ai-context/CONTEXT_MANAGEMENT.md` - Context switching guidelines
+- `.github/ai-context/AGENT_INSTRUCTIONS.md` - Detailed implementation rules
+
+**For architecture:**
+- `.github/ai-context/architecture/component-system-design.md` - Component system design
+- `.github/ai-context/plans/002-component-architecture-refactor.md` - Current master plan
+
+**For coding:**
+- This file (COPILOT_INSTRUCTIONS.md) - Project overview and conventions
+
 ## Project Overview
 
 **game-game-game** is an educational, beginner-focused platformer game engine built with vanilla JavaScript and HTML5 Canvas. The primary goal is to teach object-oriented programming concepts, game development patterns, and JavaScript best practices through a progressive, step-by-step tutorial system.

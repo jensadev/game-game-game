@@ -1,4 +1,10 @@
 import GameObject from '../core/GameObject.js'
+import StateMachine from '../core/StateMachine.js'
+import IdleState from './player-states/IdleState.js'
+import RunningState from './player-states/RunningState.js'
+import JumpingState from './player-states/JumpingState.js'
+import FallingState from './player-states/FallingState.js'
+
 import idleSprite from '../assets/Pixel Adventure 1/Main Characters/Ninja Frog/Idle (32x32).png'
 import runSprite from '../assets/Pixel Adventure 1/Main Characters/Ninja Frog/Run (32x32).png'
 import jumpSprite from '../assets/Pixel Adventure 1/Main Characters/Ninja Frog/Jump (32x32).png'
@@ -42,50 +48,40 @@ export default class Player extends GameObject {
         this.loadSprite('fall', fallSprite, 1)
         
         this.currentAnimation = 'idle'
+        
+        // Setup state machine
+        this.stateMachine = new StateMachine(this)
+        this.stateMachine.addState('idle', new IdleState())
+        this.stateMachine.addState('running', new RunningState())
+        this.stateMachine.addState('jumping', new JumpingState())
+        this.stateMachine.addState('falling', new FallingState())
+        this.stateMachine.setState('idle')
     }
 
     update(deltaTime) {
-        // Horisontell rörelse
-        if (this.game.inputHandler.keys.has('ArrowLeft')) {
-            this.velocityX = -this.moveSpeed
-            this.directionX = -1
-            this.lastDirectionX = -1 // Spara riktning
-        } else if (this.game.inputHandler.keys.has('ArrowRight')) {
-            this.velocityX = this.moveSpeed
-            this.directionX = 1
-            this.lastDirectionX = 1 // Spara riktning
-        } else {
-            this.velocityX = 0
-            this.directionX = 0
-        }
-
-        // Hopp - endast om spelaren är på marken
-        if (this.game.inputHandler.keys.has(' ') && this.isGrounded) {
-            this.velocityY = this.jumpPower
-            this.isGrounded = false
-        }
-
-        // Applicera gravitation
+        // Apply physics
         this.velocityY += this.game.gravity * deltaTime
         
-        // Applicera luftmotstånd (friktion)
+        // Apply friction
         if (this.velocityY > 0) {
             this.velocityY -= this.game.friction * deltaTime
             if (this.velocityY < 0) this.velocityY = 0
         }
 
-        // Sätt directionY baserat på vertikal hastighet för ögonrörelse
-        if (this.velocityY < -0.1) {
-            this.directionY = -1 // tittar upp när man hoppar
-        } else if (this.velocityY > 0.1) {
-            this.directionY = 1 // tittar ner när man faller
-        } else {
-            this.directionY = 0
-        }
-
-        // Uppdatera position baserat på hastighet
+        // Update position
         this.x += this.velocityX * deltaTime
         this.y += this.velocityY * deltaTime
+        
+        // Update state machine (handles movement and animations)
+        this.stateMachine.update(deltaTime)
+        
+        // Update animation frame
+        this.updateAnimation(deltaTime)
+        
+        // Shooting
+        if ((this.game.inputHandler.keys.has('x') || this.game.inputHandler.keys.has('X')) && this.canShoot) {
+            this.shoot()
+        }
         
         // Uppdatera invulnerability timer
         if (this.invulnerable) {
@@ -102,25 +98,6 @@ export default class Player extends GameObject {
                 this.canShoot = true
             }
         }
-        
-        // Skjut med X-tangenten
-        if ((this.game.inputHandler.keys.has('x') || this.game.inputHandler.keys.has('X')) && this.canShoot) {
-            this.shoot()
-        }
-        
-        // Uppdatera animation state baserat på movement
-        if (!this.isGrounded && this.velocityY < 0) {
-            this.setAnimation('jump')
-        } else if (!this.isGrounded && this.velocityY > 0) {
-            this.setAnimation('fall')
-        } else if (this.velocityX !== 0) {
-            this.setAnimation('run')
-        } else {
-            this.setAnimation('idle')
-        }
-        
-        // Uppdatera animation frame
-        this.updateAnimation(deltaTime)
     }
     
     shoot() {
@@ -184,38 +161,5 @@ export default class Player extends GameObject {
         
         // Försök rita sprite, annars fallback till rektangel
         const spriteDrawn = this.drawSprite(ctx, camera, this.lastDirectionX === -1)
-        
-        if (!spriteDrawn) {
-            // Fallback: Rita spelaren som en rektangel
-            ctx.fillStyle = this.color
-            ctx.fillRect(screenX, screenY, this.width, this.height)
-
-            // Rita ögon
-            ctx.fillStyle = 'white'
-            ctx.fillRect(screenX + this.width * 0.2, screenY + this.height * 0.2, this.width * 0.2, this.height * 0.2)
-            ctx.fillRect(screenX + this.width * 0.6, screenY + this.height * 0.2, this.width * 0.2, this.height * 0.2)
-            
-            // Rita pupiller
-            ctx.fillStyle = 'black'
-            ctx.fillRect(
-                screenX + this.width * 0.25 + this.directionX * this.width * 0.05, 
-                screenY + this.height * 0.25 + this.directionY * this.width * 0.05, 
-                this.width * 0.1, 
-                this.height * 0.1
-            )
-            ctx.fillRect(
-                screenX + this.width * 0.65 + this.directionX * this.width * 0.05, 
-                screenY + this.height * 0.25 + this.directionY * this.width * 0.05, 
-                this.width * 0.1, 
-                this.height * 0.1
-            )
-            // rita mun som ett streck
-            ctx.strokeStyle = 'black'
-            ctx.lineWidth = 2
-            ctx.beginPath()
-            ctx.moveTo(screenX + this.width * 0.3, screenY + this.height * 0.65)
-            ctx.lineTo(screenX + this.width * 0.7, screenY + this.height * 0.65)
-            ctx.stroke()
-        }
     }
 }

@@ -1,0 +1,57 @@
+# [Plan-Step] Brief description (50 chars max)
+#
+# Detailed explanation (wrap at 72 characters):
+# - What changed and why
+# - What problem this solves
+# - Any important context
+#
+# Plan: .github/ai-context/plans/002-component-architecture-refactor.md
+# Step: [X.Y] [Status: Complete/In Progress/Blocked]
+# Phase: [Phase name]
+# Architecture: [No changes / See component-system-design.md / Updated X]
+#
+# Verification:
+# - [ ] Code runs without errors
+# - [ ] Follows architecture guidelines  
+# - [ ] Tests pass (manual testing completed)
+# - [ ] Documentation updated
+#
+# Breaking Changes: [Yes/No - describe if yes]
+# Fixes: [Issue number if applicable]
+# Co-authored-by: [Name if pair programming]
+#
+# ─────────────────────────────────────────────────────────
+# Commit Message Format:
+#
+# Line 1: Type and brief description (50 chars)
+# Types: feat, fix, docs, refactor, test, chore
+#
+# Body: Detailed explanation (72 char wrap)
+# - Use bullet points
+# - Explain why, not just what
+# - Reference plan steps
+#
+# Footer: Metadata and checklists
+# ─────────────────────────────────────────────────────────
+# Example:
+#
+# [2.3] feat: Migrate Enemy to Entity-Component system
+#
+# Refactored Enemy class to extend Entity instead of GameObject.
+# Added Transform, Sprite, Collider, and Physics components.
+# Removed duplicate physics code - now handled by Physics component.
+# Patrol AI logic remains in Enemy class.
+#
+# Plan: .github/ai-context/plans/002-component-architecture-refactor.md
+# Step: 2.3 [Status: Complete]
+# Phase: Component System
+# Architecture: See component-system-design.md
+#
+# Verification:
+# - [x] Code runs without errors
+# - [x] Follows architecture guidelines
+# - [x] Tests pass (Enemy patrols correctly)
+# - [x] Documentation updated
+#
+# Breaking Changes: No
+# ─────────────────────────────────────────────────────────

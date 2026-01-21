@@ -1,5 +1,6 @@
 import './css/style.css'
 import PlatformerGame from './games/PlatformerGame.js'
+import DebugRenderer from './systems/DebugRenderer.js'
 
 const setupGame = (canvas) => {
     // Sätt storlek på canvas 854x480 (16:9)
@@ -10,6 +11,7 @@ const setupGame = (canvas) => {
 
     // Skapa plattformsspelet
     const game = new PlatformerGame(canvas.width, canvas.height)
+    const debug = new DebugRenderer()
     let lastTime = 0
     // Game loop variabel så att vi kan stoppa den senare om vi vill
     let gameLoop
@@ -29,8 +31,10 @@ const setupGame = (canvas) => {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         
         // Uppdatera och rita
+        debug.update(timeStamp)
         game.update(cappedDeltaTime)
         game.draw(ctx)
+        debug.render(ctx, game)
         
         // Kör nästa frame
         gameLoop = requestAnimationFrame(runGame)
