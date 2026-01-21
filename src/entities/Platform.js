@@ -1,4 +1,4 @@
-import GameObject from './GameObject.js'
+import GameObject from '../core/GameObject.js'
 
 export default class Platform extends GameObject {
     constructor(game, x, y, width, height, color = '#8B4513') {

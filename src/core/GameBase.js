@@ -1,6 +1,6 @@
-import InputHandler from './InputHandler.js'
-import UserInterface from './UserInterface.js'
-import Camera from './Camera.js'
+import InputHandler from '../systems/InputHandler.js'
+import UserInterface from '../systems/UserInterface.js'
+import Camera from '../systems/Camera.js'
 
 /**
  * Abstract base class för alla speltyper

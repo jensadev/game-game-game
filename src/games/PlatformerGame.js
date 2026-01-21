@@ -1,10 +1,10 @@
-import GameBase from './GameBase.js'
-import Player from './Player.js'
-import Projectile from './Projectile.js'
-import Level1 from './levels/Level1.js'
-import Level2 from './levels/Level2.js'
-import MainMenu from './menus/MainMenu.js'
-import SaveGameManager from './SaveGameManager.js'
+import GameBase from '../core/GameBase.js'
+import Player from '../entities/Player.js'
+import Projectile from '../entities/Projectile.js'
+import Level1 from '../levels/Level1.js'
+import Level2 from '../levels/Level2.js'
+import MainMenu from '../menus/MainMenu.js'
+import SaveGameManager from '../systems/SaveGameManager.js'
 
 /**
  * PlatformerGame - En konkret implementation av GameBase för plattformsspel

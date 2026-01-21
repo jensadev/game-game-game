@@ -1,5 +1,5 @@
-import './style.css'
-import PlatformerGame from './PlatformerGame.js'
+import './css/style.css'
+import PlatformerGame from './games/PlatformerGame.js'
 
 const setupGame = (canvas) => {
     // Sätt storlek på canvas 854x480 (16:9)

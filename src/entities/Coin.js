@@ -1,5 +1,5 @@
-import GameObject from './GameObject.js'
-import dingSound from './assets/sounds/ding-402325.mp3'
+import GameObject from '../core/GameObject.js'
+import dingSound from '../assets/sounds/ding-402325.mp3'
 
 export default class Coin extends GameObject {
     constructor(game, x, y, size = 20, value = 10) {

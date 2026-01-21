@@ -1,8 +1,8 @@
-import GameObject from './GameObject.js'
-import idleSprite from './assets/Pixel Adventure 1/Main Characters/Ninja Frog/Idle (32x32).png'
-import runSprite from './assets/Pixel Adventure 1/Main Characters/Ninja Frog/Run (32x32).png'
-import jumpSprite from './assets/Pixel Adventure 1/Main Characters/Ninja Frog/Jump (32x32).png'
-import fallSprite from './assets/Pixel Adventure 1/Main Characters/Ninja Frog/Fall (32x32).png'
+import GameObject from '../core/GameObject.js'
+import idleSprite from '../assets/Pixel Adventure 1/Main Characters/Ninja Frog/Idle (32x32).png'
+import runSprite from '../assets/Pixel Adventure 1/Main Characters/Ninja Frog/Run (32x32).png'
+import jumpSprite from '../assets/Pixel Adventure 1/Main Characters/Ninja Frog/Jump (32x32).png'
+import fallSprite from '../assets/Pixel Adventure 1/Main Characters/Ninja Frog/Fall (32x32).png'
 
 export default class Player extends GameObject {
     constructor(game, x, y, width, height, color) {

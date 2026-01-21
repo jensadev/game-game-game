@@ -1,4 +1,4 @@
-import GameObject from './GameObject.js'
+import GameObject from '../core/GameObject.js'
 
 export default class BackgroundObject extends GameObject {
     constructor(game, x, y, imagePath, options = {}) {
