@@ -9,7 +9,15 @@ import Component from '../core/Component.js'
 export default class Sprite extends Component {
     constructor(image = null, spriteWidth = null, spriteHeight = null) {
         super()
-        this.image = image
+        this._imageUrl = null
+        this._imageElement = null
+        this.imageLoaded = false
+        
+        // Set initial image if provided
+        if (image) {
+            this.setImage(image)
+        }
+        
         this.spriteWidth = spriteWidth   // Visual size (can differ from collider)
         this.spriteHeight = spriteHeight
         
@@ -24,6 +32,62 @@ export default class Sprite extends Component {
         this.flipY = false
     }
     
+    /**
+     * Set image from URL string or Image element
+     */
+    setImage(imageOrUrl) {
+        if (!imageOrUrl) {
+            this._imageUrl = null
+            this._imageElement = null
+            this.imageLoaded = false
+            return
+        }
+        
+        // If it's already an Image element, use it directly
+        if (imageOrUrl instanceof Image || imageOrUrl instanceof HTMLImageElement) {
+            this._imageElement = imageOrUrl
+            this._imageUrl = imageOrUrl.src
+            this.imageLoaded = imageOrUrl.complete
+            return
+        }
+        
+        // If it's a URL string, create Image element
+        if (typeof imageOrUrl === 'string') {
+            // Check if we already have this URL loaded
+            if (this._imageUrl === imageOrUrl && this._imageElement) {
+                return // Already loaded
+            }
+            
+            this._imageUrl = imageOrUrl
+            this._imageElement = new Image()
+            this._imageElement.src = imageOrUrl
+            this.imageLoaded = false
+            
+            this._imageElement.onload = () => {
+                this.imageLoaded = true
+            }
+            
+            this._imageElement.onerror = () => {
+                console.error(`Failed to load sprite image: ${imageOrUrl}`)
+                this.imageLoaded = false
+            }
+        }
+    }
+    
+    /**
+     * Get the image element (for drawing)
+     */
+    get image() {
+        return this._imageElement
+    }
+    
+    /**
+     * Set image (supports URL strings)
+     */
+    set image(value) {
+        this.setImage(value)
+    }
+    
     init() {
         // Default sprite size to entity size if not specified
         if (this.spriteWidth === null) this.spriteWidth = this.entity.width
@@ -31,10 +95,10 @@ export default class Sprite extends Component {
     }
     
     draw(ctx, camera = null) {
-        if (!this.image) return
+        if (!this.image || !this.imageLoaded) return
         
-        const cameraX = camera ? camera.x : 0
-        const cameraY = camera ? camera.y : 0
+        const cameraX = camera ? camera.position.x : 0
+        const cameraY = camera ? camera.position.y : 0
         
         const drawX = this.entity.x - cameraX
         const drawY = this.entity.y - cameraY

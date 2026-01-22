@@ -5,6 +5,8 @@ import Level1 from '../levels/Level1.js'
 import Level2 from '../levels/Level2.js'
 import MainMenu from '../menus/MainMenu.js'
 import SaveGameManager from '../systems/SaveGameManager.js'
+import CollisionManager from '../systems/CollisionManager.js'
+import ResourceManager from '../systems/ResourceManager.js'
 
 /**
  * PlatformerGame - En konkret implementation av GameBase för plattformsspel
@@ -12,8 +14,8 @@ import SaveGameManager from '../systems/SaveGameManager.js'
  * Använder Level-system för att hantera olika nivåer
  */
 export default class PlatformerGame extends GameBase {
-    constructor(width, height) {
-        super(width, height)
+    constructor(canvas, width, height) {
+        super(canvas, width, height)
         
         // Plattformsspel behöver en större värld för sidoscrolling
         this.worldWidth = width * 3
@@ -21,8 +23,9 @@ export default class PlatformerGame extends GameBase {
         this.camera.setWorldBounds(this.worldWidth, this.worldHeight)
         
         // Plattformsspel-specifik fysik
-        this.gravity = 0.001 // pixels per millisekund^2
-        this.friction = 0.00015 // luftmotstånd för att bromsa fallhastighet
+        this.gravity = 0.002 // pixels per millisekund^2
+        this.maxGravity = 1.5 // max fall speed
+        this.airResistance = 0.001 // horizontal air resistance (configurable)
 
         // Plattformsspel-specifik state
         this.coinsCollected = 0
@@ -42,8 +45,13 @@ export default class PlatformerGame extends GameBase {
         this.backgrounds = []
         this.backgroundObjects = []
         
-        // Save game system
+        // Systems
         this.saveManager = new SaveGameManager('platformer-save')
+        this.resources = new ResourceManager()
+        this.collisionManager = new CollisionManager(this)
+        
+        // Setup event listeners
+        this.setupEventListeners()
         
         // Initiera spelet
         this.init()
@@ -52,18 +60,40 @@ export default class PlatformerGame extends GameBase {
         this.currentMenu = new MainMenu(this)
     }
     
+    setupEventListeners() {
+        this.eventBus.on('coin:collected', (data) => {
+            this.score += data.value
+            this.coinsCollected++
+        })
+        
+        this.eventBus.on('player:damaged', (data) => {
+            if (data.newHealth <= 0) {
+                this.eventBus.emit('game:over', {
+                    finalScore: this.score,
+                    level: this.currentLevelIndex
+                })
+            }
+        })
+        
+        this.eventBus.on('level:complete', (data) => {
+            this.nextLevel()
+        })
+        
+        this.eventBus.on('game:over', (data) => {
+            this.gameState = 'GAME_OVER'
+        })
+    }
+    
     init() {
-        // Återställ score (men inte game state - det hanteras av constructor/restart)
+        // Reset score
         this.score = 0
         this.coinsCollected = 0
         
-        // Återställ camera
-        this.camera.x = 0
-        this.camera.y = 0
-        this.camera.targetX = 0
-        this.camera.targetY = 0
+        // Reset camera position
+        this.camera.position.set(0, 0)
+        this.camera.targetPosition.set(0, 0)
 
-        // Ladda current level
+        // Load current level
         this.loadLevel(this.currentLevelIndex)
     }
     
@@ -105,11 +135,10 @@ export default class PlatformerGame extends GameBase {
         // Återställ projektiler
         this.projectiles = []
         
-        // Återställ camera för ny level
-        this.camera.x = 0
-        this.camera.y = 0
-        this.camera.targetX = 0
-        this.camera.targetY = 0
+        // Set camera to follow player
+        this.camera.position.set(0, 0)
+        this.camera.targetPosition.set(0, 0)
+        this.camera.setTarget(this.player)
     }
     
     nextLevel() {
@@ -140,263 +169,267 @@ export default class PlatformerGame extends GameBase {
     }
     
     /**
-     * Sparar nuvarande spelläge
+     * Get serializable game state
      */
-    saveGame() {
-        // Kolla att spelaren finns (kan inte spara om spelet inte har startat)
+    getState() {
+        return {
+            version: 1,
+            timestamp: Date.now(),
+            level: this.currentLevelIndex,
+            score: this.score,
+            coinsCollected: this.coinsCollected,
+            player: {
+                x: this.player.x,
+                y: this.player.y,
+                health: this.player.health,
+                maxHealth: this.player.maxHealth
+            }
+        }
+    }
+    
+    /**
+     * Restore from saved state
+     */
+    setState(state) {
+        if (state.version !== 1) {
+            console.warn('Save file version mismatch')
+            return false
+        }
+        
+        // Load level
+        this.currentLevelIndex = state.level
+        this.loadLevel(this.currentLevelIndex)
+        
+        // Restore progress
+        this.score = state.score
+        this.coinsCollected = state.coinsCollected
+        
+        // Restore player
+        this.player.x = state.player.x
+        this.player.y = state.player.y
+        this.player.health = state.player.health
+        this.player.maxHealth = state.player.maxHealth
+        
+        return true
+    }
+    
+    /**
+     * Save to slot (0-2)
+     */
+    saveGame(slot = 0) {
         if (!this.player) {
             console.warn('Cannot save: game not started')
             return false
         }
         
-        return this.saveManager.save({
-            currentLevelIndex: this.currentLevelIndex,
-            score: this.score,
-            coinsCollected: this.coinsCollected,
-            health: this.player.health,
-            playerX: this.player.x,
-            playerY: this.player.y
+        const state = this.getState()
+        return this.saveManager.save(`slot_${slot}`, state)
+    }
+    
+    /**
+     * Load from slot (0-2)
+     */
+    loadGame(slot = 0) {
+        const state = this.saveManager.load(`slot_${slot}`)
+        if (!state) {
+            console.warn('No save data in slot', slot)
+            return false
+        }
+        
+        const success = this.setState(state)
+        if (success) {
+            this.gameState = 'PLAYING'
+            this.currentMenu = null
+            console.log('Game loaded from slot', slot)
+        }
+        return success
+    }
+    
+    /**
+     * Get all save slots info (for UI)
+     */
+    getSaveSlots() {
+        return [0, 1, 2].map(slot => {
+            const state = this.saveManager.load(`slot_${slot}`)
+            if (!state) {
+                return { slot, empty: true }
+            }
+            
+            return {
+                slot,
+                empty: false,
+                level: state.level + 1,  // Display as 1-indexed
+                score: state.score,
+                timestamp: new Date(state.timestamp).toLocaleString()
+            }
         })
     }
     
     /**
-     * Laddar sparat spelläge
-     * @returns {boolean} True om laddning lyckades
+     * Delete save slot
      */
-    loadGame() {
-        const saveData = this.saveManager.load()
-        if (!saveData) {
-            console.warn('No save data found')
-            return false
-        }
-        
-        // Ladda level först
-        this.currentLevelIndex = saveData.currentLevelIndex
-        this.loadLevel(this.currentLevelIndex)
-        
-        // Återställ spelarens position och hälsa
-        this.player.x = saveData.playerX
-        this.player.y = saveData.playerY
-        this.player.health = saveData.health
-        
-        // Återställ progress
-        this.score = saveData.score
-        this.coinsCollected = saveData.coinsCollected
-        
-        // Starta spelet
-        this.gameState = 'PLAYING'
-        this.currentMenu = null
-        
-        console.log('Game loaded!')
-        return true
+    deleteSave(slot = 0) {
+        this.saveManager.delete(`slot_${slot}`)
     }
 
     update(deltaTime) {
-        // Uppdatera menyn om den är aktiv
+        // Handle menu updates
         if (this.gameState === 'MENU' && this.currentMenu) {
             this.currentMenu.update(deltaTime)
-            this.inputHandler.keys.clear() // Rensa keys så de inte läcker till spelet
+            this.inputHandler.update() // Clear input after menu processes it
             return
         }
         
-        // Kolla Escape för att öppna menyn under spel
-        if (this.inputHandler.keys.has('Escape') && this.gameState === 'PLAYING') {
+        // Handle game-level input
+        this.handleGameInput()
+        
+        // Only update game entities when playing
+        if (this.gameState !== 'PLAYING') {
+            this.inputHandler.update() // Clear input even when not playing
+            return
+        }
+        
+        // Phase 1: Check ground state BEFORE physics applies gravity
+        this.collisionManager.updateGroundState()
+        
+        // Phase 2: Update all entities (physics uses correct isGrounded)
+        this.updateEntities(deltaTime)
+        
+        // Phase 3: Resolve collisions and handle interactions
+        this.collisionManager.resolveCollisions()
+        
+        // Update camera
+        this.camera.update(deltaTime)
+        
+        // Check win/lose conditions
+        this.checkGameConditions()
+        
+        // Clear frame-specific input sets at END of frame
+        this.inputHandler.update()
+    }
+    
+    /**
+     * Handle game-level input (pause, save, debug, etc)
+     */
+    handleGameInput() {
+        // Pause menu
+        if (this.inputHandler.isKeyPressed('Escape') && this.gameState === 'PLAYING') {
             this.gameState = 'MENU'
             this.currentMenu = new MainMenu(this)
-            return
         }
         
-        // Kolla restart input
-        if (this.inputHandler.keys.has('r') || this.inputHandler.keys.has('R')) {
+        // Restart
+        if (this.inputHandler.isKeyPressed('r') || this.inputHandler.isKeyPressed('R')) {
             if (this.gameState === 'GAME_OVER' || this.gameState === 'WIN') {
                 this.restart()
-                return
             }
         }
         
-        // Debug: Byt level med N-tangenten (för testning)
-        if (this.inputHandler.keys.has('n') || this.inputHandler.keys.has('N')) {
-            // Ta bort tangenten så den inte triggas flera gånger
-            this.inputHandler.keys.delete('n')
-            this.inputHandler.keys.delete('N')
-            
-            // Gå till nästa level (loopa runt om nödvändigt)
+        // Debug: Next level
+        if (this.inputHandler.isKeyPressed('n') || this.inputHandler.isKeyPressed('N')) {
             this.currentLevelIndex = (this.currentLevelIndex + 1) % this.levels.length
             this.loadLevel(this.currentLevelIndex)
             this.gameState = 'PLAYING'
-            return
         }
         
-        // Spara spelet med S-tangenten (endast när spelet körs)
-        if ((this.inputHandler.keys.has('s') || this.inputHandler.keys.has('S')) && this.gameState === 'PLAYING') {
-            // Ta bort tangenten så den inte triggas flera gånger
-            this.inputHandler.keys.delete('s')
-            this.inputHandler.keys.delete('S')
-            
-            this.saveGame()
-            return
+        // Save game
+        if ((this.inputHandler.isKeyPressed('s') || this.inputHandler.isKeyPressed('S')) && this.gameState === 'PLAYING') {
+            this.saveGame(0)  // Default slot
         }
-        
-        // Uppdatera bara om spelet är i PLAYING state
-        if (this.gameState !== 'PLAYING') return
-        
-        // Uppdatera background objects
+    }
+    
+    /**
+     * Update all game entities
+     */
+    updateEntities(deltaTime) {
+        // Backgrounds
         this.backgroundObjects.forEach(obj => obj.update(deltaTime))
         
-        // Uppdatera plattformar (även om de är statiska)
-        this.platforms.forEach(platform => platform.update(deltaTime))
+        // Level entities
+        this.platforms.forEach(p => p.update(deltaTime))
+        this.coins.forEach(c => c.update(deltaTime))
+        this.enemies.forEach(e => e.update(deltaTime))
+        this.projectiles.forEach(p => p.update(deltaTime))
         
-        // Uppdatera mynt (plattformsspel-specifikt)
-        this.coins.forEach(coin => coin.update(deltaTime))
-        
-        // Uppdatera fiender (med plattformsfysik)
-        this.enemies.forEach(enemy => enemy.update(deltaTime))
-        
-        // Uppdatera spelaren
+        // Player
         this.player.update(deltaTime)
-
-        // Antag att spelaren inte står på marken, tills vi hittar en kollision
-        this.player.isGrounded = false
-
-        // Kontrollera kollisioner med plattformar
-        this.platforms.forEach(platform => {
-            this.player.handlePlatformCollision(platform)
-        })
-
-        // Kontrollera kollisioner för fiender med plattformar
+        
+        // Remove deleted entities
+        this.coins = this.coins.filter(c => !c.markedForDeletion)
+        this.enemies = this.enemies.filter(e => !e.markedForDeletion)
+        this.projectiles = this.projectiles.filter(p => !p.markedForDeletion)
+        
+        // World bounds for player
+        this.player.x = Math.max(0, Math.min(this.player.x, this.worldWidth - this.player.width))
+        
+        // World bounds for enemies
         this.enemies.forEach(enemy => {
-            enemy.isGrounded = false
-            
-            this.platforms.forEach(platform => {
-                enemy.handlePlatformCollision(platform)
-            })
-            
-            // Vänd vid world bounds istället för screen bounds
             enemy.handleScreenBounds(this.worldWidth)
         })
-        
-        // Kontrollera kollisioner mellan fiender
-        this.enemies.forEach((enemy, index) => {
-            this.enemies.slice(index + 1).forEach(otherEnemy => {
-                enemy.handleEnemyCollision(otherEnemy)
-                otherEnemy.handleEnemyCollision(enemy)
-            })
-        })
-
-        // Kontrollera kollision med mynt
-        this.coins.forEach(coin => {
-            if (this.player.intersects(coin) && !coin.markedForDeletion) {
-                // Plocka upp myntet
-                this.score += coin.value
-                this.coinsCollected++
-                coin.collect() // Myntet hanterar sin egen ljud och markering
-            }
-        })
-        
-        // Kontrollera kollision med fiender
-        this.enemies.forEach(enemy => {
-            if (this.player.intersects(enemy) && !enemy.markedForDeletion) {
-                // Spelaren tar skada
-                this.player.takeDamage(enemy.damage)
-            }
-        })
-        
-        // Uppdatera projektiler
-        this.projectiles.forEach(projectile => {
-            projectile.update(deltaTime)
-            
-            // Kolla kollision med fiender
-            this.enemies.forEach(enemy => {
-                if (projectile.intersects(enemy) && !enemy.markedForDeletion) {
-                    enemy.markedForDeletion = true
-                    projectile.markedForDeletion = true
-                    this.score += enemy.points || 50 // Använd enemy.points om det finns, annars 50
-                }
-            })
-            
-            // Kolla projektil-kollision med plattformar (plattformsspel-specifikt)
-            this.platforms.forEach(platform => {
-                if (projectile.intersects(platform)) {
-                    projectile.markedForDeletion = true
-                }
-            })
-        })
-        
-        // Ta bort objekt markerade för borttagning
-        this.coins = this.coins.filter(coin => !coin.markedForDeletion)
-        this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion)
-        this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion)
-
-        // Förhindra att spelaren går utöver world bounds
-        if (this.player.x < 0) {
-            this.player.x = 0
-        }
-        if (this.player.x + this.player.width > this.worldWidth) {
-            this.player.x = this.worldWidth - this.player.width
-        }
-        
-        // Uppdatera kameran för att följa spelaren
-        this.camera.follow(this.player)
-        this.camera.update(deltaTime)
-        
-        // Kolla win condition - alla mynt samlade
+    }
+    
+    /**
+     * Check win/lose conditions
+     */
+    checkGameConditions() {
+        // Win - all coins collected
         if (this.coinsCollected === this.totalCoins && this.gameState === 'PLAYING') {
-            // Gå till nästa level
-            this.nextLevel()
+            this.eventBus.emit('level:complete', {
+                levelIndex: this.currentLevelIndex,
+                coinsCollected: this.coinsCollected,
+                totalCoins: this.totalCoins
+            })
         }
         
-        // Kolla lose condition - spelaren är död
-        if (this.player.health <= 0 && this.gameState === 'PLAYING') {
-            this.gameState = 'GAME_OVER'
-        }
+        // Note: Lose condition handled by player:damaged event
     }
 
     draw(ctx) {
-        // Rita backgrounds FÖRST (längst bak)
+        // Draw backgrounds FIRST (furthest back)
         this.backgrounds.forEach(bg => bg.draw(ctx, this.camera))
         
-        // Rita background objects
+        // Draw background objects
         this.backgroundObjects.forEach(obj => {
             if (this.camera.isVisible(obj)) {
                 obj.draw(ctx, this.camera)
             }
         })
         
-        // Rita alla plattformar med camera offset
+        // Draw all platforms with camera offset
         this.platforms.forEach(platform => {
             if (this.camera.isVisible(platform)) {
                 platform.draw(ctx, this.camera)
             }
         })
         
-        // Rita mynt med camera offset
+        // Draw coins with camera offset
         this.coins.forEach(coin => {
             if (this.camera.isVisible(coin)) {
                 coin.draw(ctx, this.camera)
             }
         })
         
-        // Rita fiender med camera offset
+        // Draw enemies with camera offset
         this.enemies.forEach(enemy => {
             if (this.camera.isVisible(enemy)) {
                 enemy.draw(ctx, this.camera)
             }
         })
         
-        // Rita projektiler med camera offset
+        // Draw projectiles with camera offset
         this.projectiles.forEach(projectile => {
             if (this.camera.isVisible(projectile)) {
                 projectile.draw(ctx, this.camera)
             }
         })
         
-        // Rita spelaren med camera offset
+        // Draw player with camera offset
         this.player.draw(ctx, this.camera)
         
-        // Rita UI sist (utan camera offset - alltid synligt)
+        // Draw UI last (without camera offset - always visible)
         this.ui.draw(ctx)
         
-        // Rita meny överst om den är aktiv
+        // Draw menu on top if active
         if (this.currentMenu) {
             this.currentMenu.draw(ctx)
         }

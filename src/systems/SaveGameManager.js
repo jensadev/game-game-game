@@ -1,124 +1,130 @@
 /**
- * SaveGameManager - Hanterar sparning och laddning av speldata
- * Använder localStorage för att spara speldata mellan sessioner
+ * SaveGameManager - Handles saving and loading game data
+ * Uses localStorage to persist game data between sessions
+ * Supports multiple save slots
  */
 export default class SaveGameManager {
     /**
-     * Skapar en ny SaveGameManager
-     * @param {string} storageKey - Nyckeln att använda i localStorage
+     * Creates a new SaveGameManager
+     * @param {string} prefix - Prefix for localStorage keys
      */
-    constructor(storageKey = 'game-save-data') {
-        this.storageKey = storageKey
+    constructor(prefix = 'game-save') {
+        this.prefix = prefix
     }
 
     /**
-     * Sparar speldata till localStorage
-     * @param {Object} gameData - Objektet med data att spara
-     * @returns {boolean} True om sparandet lyckades, false annars
+     * Save game data to localStorage
+     * @param {string} key - Storage key (e.g., 'slot_0')
+     * @param {Object} data - Object with data to save
+     * @returns {boolean} True if save succeeded, false otherwise
      */
-    save(gameData) {
+    save(key, data) {
         try {
-            // Lägg till en timestamp så vi vet när spelet sparades
-            const saveData = {
-                timestamp: Date.now(),
-                ...gameData // Spread operator - kopierar alla properties från gameData
-            }
-            
-            // Konvertera objektet till en JSON-sträng
-            const jsonString = JSON.stringify(saveData)
-            
-            // Spara i localStorage
-            localStorage.setItem(this.storageKey, jsonString)
-            
-            console.log('Game saved successfully!')
+            const storageKey = `${this.prefix}_${key}`
+            const jsonString = JSON.stringify(data)
+            localStorage.setItem(storageKey, jsonString)
+            console.log(`Game saved to ${key}`)
             return true
         } catch (error) {
-            // localStorage kan kasta fel om:
-            // - Utrymmet är fullt
-            // - localStorage är blockerat (privacy mode)
-            // - JSON serialization misslyckas
             console.error('Failed to save game:', error)
             return false
         }
     }
 
     /**
-     * Laddar sparad speldata från localStorage
-     * @returns {Object|null} Sparad data eller null om ingen data finns
+     * Load saved game data from localStorage
+     * @param {string} key - Storage key (e.g., 'slot_0')
+     * @returns {Object|null} Saved data or null if no data found
      */
-    load() {
+    load(key) {
         try {
-            // Hämta JSON-strängen från localStorage
-            const jsonString = localStorage.getItem(this.storageKey)
+            const storageKey = `${this.prefix}_${key}`
+            const jsonString = localStorage.getItem(storageKey)
             
-            // Om ingen data finns, returnera null
             if (!jsonString) {
                 return null
             }
             
-            // Konvertera JSON-strängen tillbaka till ett objekt
-            const saveData = JSON.parse(jsonString)
-            
-            console.log('Game loaded successfully!')
-            return saveData
+            const data = JSON.parse(jsonString)
+            console.log(`Game loaded from ${key}`)
+            return data
         } catch (error) {
-            // JSON.parse kan kasta fel om data är korrupt
             console.error('Failed to load game:', error)
             return null
         }
     }
 
     /**
-     * Kollar om det finns sparad data
-     * @returns {boolean} True om det finns sparad data
+     * Check if a save exists in a slot
+     * @param {string} key - Storage key (e.g., 'slot_0')
+     * @returns {boolean} True if save data exists
      */
-    hasSave() {
-        return localStorage.getItem(this.storageKey) !== null
+    hasSave(key = 'slot_0') {
+        const storageKey = `${this.prefix}_${key}`
+        return localStorage.getItem(storageKey) !== null
     }
 
     /**
-     * Raderar sparad data
+     * Delete save data from a slot
+     * @param {string} key - Storage key (e.g., 'slot_0')
      */
-    clear() {
+    delete(key) {
         try {
-            localStorage.removeItem(this.storageKey)
-            console.log('Save data cleared!')
+            const storageKey = `${this.prefix}_${key}`
+            localStorage.removeItem(storageKey)
+            console.log(`Save deleted from ${key}`)
         } catch (error) {
-            console.error('Failed to clear save data:', error)
+            console.error('Failed to delete save:', error)
         }
     }
 
     /**
-     * Hämtar information om den sparade datan (för UI)
-     * Användbart för att visa "Continue from Level 2" etc
-     * @returns {Object|null} Info-objekt eller null om ingen data finns
+     * Get info about a save (for UI display)
+     * @param {string} key - Storage key (e.g., 'slot_0')
+     * @returns {Object|null} Info object or null if no data found
      */
-    getSaveInfo() {
-        const save = this.load()
+    getSaveInfo(key = 'slot_0') {
+        const save = this.load(key)
         if (!save) return null
         
         return {
             timestamp: new Date(save.timestamp).toLocaleString('sv-SE'),
-            level: save.currentLevelIndex + 1, // +1 för att levels är 0-indexerade
+            level: save.level + 1, // +1 since levels are 0-indexed
             score: save.score,
-            health: save.health,
             coinsCollected: save.coinsCollected
         }
     }
 
     /**
-     * Debug-metod för att se exakt vad som är sparat
-     * Använd i console: game.saveManager.debugPrint()
+     * Clear ALL save data (all slots)
+     */
+    clearAll() {
+        try {
+            // Remove all keys with our prefix
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith(this.prefix)) {
+                    localStorage.removeItem(key)
+                }
+            })
+            console.log('All save data cleared')
+        } catch (error) {
+            console.error('Failed to clear all saves:', error)
+        }
+    }
+
+    /**
+     * Debug method to see what's saved
      */
     debugPrint() {
-        const saveData = this.load()
-        if (!saveData) {
-            console.log('No save data found')
-            return
-        }
-        
         console.log('=== SAVE DATA ===')
-        console.table(saveData)
+        ;[0, 1, 2].forEach(slot => {
+            const data = this.load(`slot_${slot}`)
+            if (data) {
+                console.log(`Slot ${slot}:`, data)
+            } else {
+                console.log(`Slot ${slot}: Empty`)
+            }
+        })
         console.log('=================')
     }
 }

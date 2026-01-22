@@ -68,4 +68,30 @@ export default class Vector2 {
         this.y = other.y
         return this
     }
+
+    /**
+     * Linear interpolation between two vectors
+     * @param {Vector2} from - Start vector
+     * @param {Vector2} to - End vector  
+     * @param {number} t - Interpolation factor (0-1)
+     * @returns {Vector2} New interpolated vector
+     */
+    static lerp(from, to, t) {
+        return new Vector2(
+            from.x + (to.x - from.x) * t,
+            from.y + (to.y - from.y) * t
+        )
+    }
+
+    /**
+     * Lerp this vector towards another
+     * @param {Vector2} other - Target vector
+     * @param {number} t - Interpolation factor (0-1)
+     * @returns {Vector2} This vector (for chaining)
+     */
+    lerp(other, t) {
+        this.x += (other.x - this.x) * t
+        this.y += (other.y - this.y) * t
+        return this
+    }
 }

@@ -18,12 +18,14 @@ export default class Animator extends Component {
     /**
      * Add an animation
      * @param {string} name - Animation name
-     * @param {Array} frames - Array of {x, y} frame coordinates
+     * @param {string} resourceKey - Image resource key from ResourceManager
+     * @param {number} frameCount - Number of frames in animation
      * @param {number} frameInterval - Milliseconds per frame
      */
-    addAnimation(name, frames, frameInterval = 100) {
+    addAnimation(name, resourceKey, frameCount, frameInterval = 100) {
         this.animations[name] = {
-            frames,
+            resourceKey,
+            frameCount,
             frameInterval,
             loop: true
         }
@@ -56,6 +58,12 @@ export default class Animator extends Component {
         const anim = this.animations[this.currentAnimation]
         if (!anim) return
         
+        // Only animate if more than 1 frame
+        if (anim.frameCount <= 1) {
+            this.frameIndex = 0
+            return
+        }
+        
         this.frameTimer += deltaTime
         
         // Advance to next frame
@@ -64,20 +72,27 @@ export default class Animator extends Component {
             this.frameIndex++
             
             // Loop animation
-            if (this.frameIndex >= anim.frames.length) {
+            if (this.frameIndex >= anim.frameCount) {
                 if (anim.loop) {
                     this.frameIndex = 0
                 } else {
-                    this.frameIndex = anim.frames.length - 1
+                    this.frameIndex = anim.frameCount - 1
                 }
             }
         }
         
-        // Update sprite frame
+        // Update sprite component with current frame
         const sprite = this.entity.getComponent('Sprite')
-        if (sprite && anim.frames[this.frameIndex]) {
-            const frame = anim.frames[this.frameIndex]
-            sprite.setFrame(frame.x, frame.y)
+        if (sprite) {
+            sprite.frameX = this.frameIndex
+            
+            // Update image if animation has specific resource
+            if (anim.resourceKey && this.entity.game.resources) {
+                const image = this.entity.game.resources.get(anim.resourceKey)
+                if (image) {
+                    sprite.image = image
+                }
+            }
         }
     }
     

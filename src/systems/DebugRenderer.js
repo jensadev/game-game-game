@@ -66,8 +66,8 @@ export default class DebugRenderer {
         ctx.lineWidth = 2
         
         // Get camera offset
-        const cameraX = game.camera ? game.camera.x : 0
-        const cameraY = game.camera ? game.camera.y : 0
+        const cameraX = game.camera ? game.camera.position.x : 0
+        const cameraY = game.camera ? game.camera.position.y : 0
         
         // Draw player box
         if (game.player) {

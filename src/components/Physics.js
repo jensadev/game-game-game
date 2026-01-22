@@ -14,27 +14,33 @@ export default class Physics extends Component {
         this.acceleration = new Vector2(0, 0)
         
         // Physics properties
-        this.gravity = 0.001  // pixels per millisecond^2
         this.friction = 0.00015  // air resistance
         this.useGravity = true
+        this.isGrounded = false  // Set by CollisionManager
+        this.gravityScale = 1.0  // Multiplier for gravity
     }
     
     update(deltaTime) {
         if (!this.entity) return
         
-        // Apply gravity
-        if (this.useGravity) {
-            this.velocity.y += this.gravity * deltaTime
+        // Apply gravity from game settings (but not when grounded)
+        if (this.useGravity && !this.isGrounded && this.entity.game) {
+            this.velocity.y += this.entity.game.gravity * this.gravityScale * deltaTime
         }
         
-        // Apply friction to vertical velocity
-        if (this.velocity.y > 0) {
-            this.velocity.y -= this.friction * deltaTime
-            if (this.velocity.y < 0) this.velocity.y = 0
+        // Apply air resistance to horizontal velocity only
+        if (this.entity.game && this.entity.game.airResistance) {
+            const resistance = this.entity.game.airResistance * deltaTime
+            if (Math.abs(this.velocity.x) > resistance) {
+                this.velocity.x -= Math.sign(this.velocity.x) * resistance
+            } else {
+                this.velocity.x = 0
+            }
         }
         
         // Apply acceleration
-        this.velocity.add(this.acceleration.x * deltaTime, this.acceleration.y * deltaTime)
+        this.velocity.x += this.acceleration.x * deltaTime
+        this.velocity.y += this.acceleration.y * deltaTime
         
         // Update position
         this.entity.x += this.velocity.x * deltaTime

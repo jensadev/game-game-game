@@ -1,41 +1,59 @@
-import GameObject from '../core/GameObject.js'
+import Entity from '../core/Entity.js'
+import Physics from '../components/Physics.js'
+import Sprite from '../components/Sprite.js'
+import Collider from '../components/Collider.js'
 
-export default class Enemy extends GameObject {
+export default class Enemy extends Entity {
     constructor(game, x, y, width, height, patrolDistance = null) {
         super(game, x, y, width, height)
-        this.color = 'red' // Röd
         
-        // Fysik
-        this.velocityX = 0
-        this.velocityY = 0
-        this.isGrounded = false
+        // Add Physics component
+        const physics = new Physics(0, 0)
+        physics.useGravity = true
+        physics.gravityScale = 1
+        this.addComponent(physics)
         
-        // Patrol AI
+        // Add Sprite component (simple colored rectangle for now)
+        const sprite = new Sprite(null, width, height)
+        sprite.color = 'red'
+        this.addComponent(sprite)
+        
+        // Add Collider component
+        const collider = new Collider(width, height, 0, 0)
+        this.addComponent(collider)
+        
+        // Patrol AI properties
         this.startX = x
         this.patrolDistance = patrolDistance
         this.endX = patrolDistance !== null ? x + patrolDistance : null
         this.speed = 0.1
-        this.direction = 1 // 1 = höger, -1 = vänster
+        this.direction = 1 // 1 = right, -1 = left
         
-        this.damage = 1 // Hur mycket skada fienden gör
-
+        // Combat properties
+        this.damage = 1
+        this.points = 50 // Score when defeated
     }
 
     update(deltaTime) {
-        // Applicera gravitation
-        this.velocityY += this.game.gravity * deltaTime
+        // Update all components first
+        super.update(deltaTime)
         
-        // Applicera luftmotstånd
-        if (this.velocityY > 0) {
-            this.velocityY -= this.game.friction * deltaTime
-            if (this.velocityY < 0) this.velocityY = 0
-        }
+        // Enemy AI logic
+        this.updateAI(deltaTime)
+    }
+    
+    /**
+     * Enemy AI - patrol behavior
+     */
+    updateAI(deltaTime) {
+        const physics = this.getComponent('Physics')
+        if (!physics) return
         
-        // Patruller när på marken
-        if (this.isGrounded) {
-            this.velocityX = this.speed * this.direction
+        // Only patrol when grounded
+        if (physics.isGrounded) {
+            physics.velocity.x = this.speed * this.direction
             
-            // Om vi har en patrolldistans, vänd vid ändpunkter
+            // If we have patrol distance, turn at endpoints
             if (this.patrolDistance !== null) {
                 if (this.x >= this.endX) {
                     this.direction = -1
@@ -45,49 +63,22 @@ export default class Enemy extends GameObject {
                     this.x = this.startX
                 }
             }
-            // Annars fortsätter fienden tills den kolliderar med något
         } else {
-            this.velocityX = 0
-        }
-        
-        // Uppdatera position
-        this.x += this.velocityX * deltaTime
-        this.y += this.velocityY * deltaTime
-    }
-
-    handlePlatformCollision(platform) {
-        const collision = this.getCollisionData(platform)
-        
-        if (collision) {
-            if (collision.direction === 'top' && this.velocityY > 0) {
-                // Fienden landar på plattformen
-                this.y = platform.y - this.height
-                this.velocityY = 0
-                this.isGrounded = true
-            } else if (collision.direction === 'bottom' && this.velocityY < 0) {
-                // Fienden träffar huvudet
-                this.y = platform.y + platform.height
-                this.velocityY = 0
-            } else if (collision.direction === 'left' && this.velocityX > 0) {
-                // Fienden träffar vägg - vänd
-                this.x = platform.x - this.width
-                this.direction = -1
-            } else if (collision.direction === 'right' && this.velocityX < 0) {
-                // Fienden träffar vägg - vänd
-                this.x = platform.x + platform.width
-                this.direction = 1
-            }
+            physics.velocity.x = 0
         }
     }
     
+    /**
+     * Handle collision with another enemy (bounce off)
+     */
     handleEnemyCollision(otherEnemy) {
-        if (this.intersects(otherEnemy)) {
-            this.direction *= -1
-        }
+        this.direction *= -1
     }
     
+    /**
+     * Handle world bounds (for enemies without patrol distance)
+     */
     handleScreenBounds(gameWidth) {
-        // Vänd vid skärmkanter (för fiender utan patrolDistance)
         if (this.patrolDistance === null) {
             if (this.x <= 0) {
                 this.x = 0
@@ -98,14 +89,16 @@ export default class Enemy extends GameObject {
             }
         }
     }
-
+    
     draw(ctx, camera = null) {
-        // Beräkna screen position (om camera finns)
-        const screenX = camera ? this.x - camera.x : this.x
-        const screenY = camera ? this.y - camera.y : this.y
+        const cameraX = camera ? camera.position.x : 0
+        const cameraY = camera ? camera.position.y : 0
+        const screenX = this.x - cameraX
+        const screenY = this.y - cameraY
         
-        // Rita fienden som en röd rektangel
-        ctx.fillStyle = this.color
+        // Draw enemy as red rectangle
+        const sprite = this.getComponent('Sprite')
+        ctx.fillStyle = sprite?.color || 'red'
         ctx.fillRect(screenX, screenY, this.width, this.height)
     }
 }

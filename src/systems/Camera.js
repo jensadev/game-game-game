@@ -1,18 +1,20 @@
+import Vector2 from '../core/Vector2.js'
+
 export default class Camera {
     constructor(x = 0, y = 0, width = 800, height = 600) {
-        this.x = x
-        this.y = y
+        this.position = new Vector2(x, y)
+        this.targetPosition = new Vector2(x, y)
         this.width = width
         this.height = height
         
-        // World bounds (nivåns storlek)
+        // World bounds
         this.worldWidth = width
         this.worldHeight = height
         
-        // Smooth following
-        this.smoothing = 0.1 // 0-1, högre = snabbare följning
-        this.targetX = x
-        this.targetY = y
+        // Following
+        this.followTarget = null  // Entity reference
+        this.smoothing = 0.1      // 0-1, higher = faster
+        this.mode = 'follow'      // 'follow' or 'fixed'
     }
     
     setWorldBounds(width, height) {
@@ -20,51 +22,84 @@ export default class Camera {
         this.worldHeight = height
     }
     
-    follow(target) {
-        // Beräkna spelarens position relativt till kamerans centrum
-        const targetCenterX = target.x + target.width / 2
-        const targetCenterY = target.y + target.height / 2
-        
-        // Centrera kameran på spelaren
-        this.targetX = targetCenterX - this.width / 2
-        this.targetY = targetCenterY - this.height / 2
-        
-        // Clamp till world bounds
-        this.targetX = Math.max(0, Math.min(this.targetX, this.worldWidth - this.width))
-        this.targetY = Math.max(0, Math.min(this.targetY, this.worldHeight - this.height))
+    /**
+     * Set entity to follow
+     * Call once, camera will track entity automatically
+     */
+    setTarget(entity) {
+        this.followTarget = entity
+        this.mode = 'follow'
+    }
+    
+    /**
+     * Stop following, camera stays at current position
+     */
+    setFixed() {
+        this.followTarget = null
+        this.mode = 'fixed'
+    }
+    
+    /**
+     * Move camera to specific position (for cutscenes, etc)
+     * Note: Cinematic mode with waypoint paths is a future feature
+     */
+    moveTo(x, y) {
+        this.targetPosition.set(x, y)
+        this.mode = 'fixed'
     }
     
     update(deltaTime) {
-        // Smooth lerp till target position
-        this.x += (this.targetX - this.x) * this.smoothing
-        this.y += (this.targetY - this.y) * this.smoothing
+        // Calculate target position based on mode
+        if (this.mode === 'follow' && this.followTarget) {
+            this._updateFollowTarget()
+        }
         
-        // Avrunda för att undvika pixel-jitter
-        this.x = Math.round(this.x)
-        this.y = Math.round(this.y)
+        // Smooth lerp to target
+        this.position.lerp(this.targetPosition, this.smoothing)
+        
+        // Clamp to world bounds
+        this.position.x = Math.max(0, Math.min(this.position.x, this.worldWidth - this.width))
+        this.position.y = Math.max(0, Math.min(this.position.y, this.worldHeight - this.height))
+        
+        // Round to avoid sub-pixel rendering
+        this.position.x = Math.round(this.position.x)
+        this.position.y = Math.round(this.position.y)
     }
     
-    // Konvertera world coordinates till screen coordinates
+    /**
+     * Internal: Calculate target position from follow entity
+     */
+    _updateFollowTarget() {
+        const target = this.followTarget
+        const targetCenterX = target.x + target.width / 2
+        const targetCenterY = target.y + target.height / 2
+        
+        // Center camera on target
+        this.targetPosition.x = targetCenterX - this.width / 2
+        this.targetPosition.y = targetCenterY - this.height / 2
+    }
+    
+    // Convert world coordinates to screen coordinates
     worldToScreen(worldX, worldY) {
         return {
-            x: worldX - this.x,
-            y: worldY - this.y
+            x: worldX - this.position.x,
+            y: worldY - this.position.y
         }
     }
     
-    // Konvertera screen coordinates till world coordinates
+    // Convert screen coordinates to world coordinates
     screenToWorld(screenX, screenY) {
         return {
-            x: screenX + this.x,
-            y: screenY + this.y
+            x: screenX + this.position.x,
+            y: screenY + this.position.y
         }
     }
     
-    // Kolla om ett objekt är synligt på skärmen
+    // Check if an object is visible on screen
     isVisible(object) {
-        return !(object.x + object.width < this.x ||
-                object.x > this.x + this.width ||
-                object.y + object.height < this.y ||
-                object.y > this.y + this.height)
+        return !(object.x + object.width < this.position.x ||
+                object.x > this.position.x + this.width ||
+                object.y + object.height < this.position.y ||
+                object.y > this.position.y + this.height)
     }
 }

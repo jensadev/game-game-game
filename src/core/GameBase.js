@@ -1,6 +1,7 @@
 import InputHandler from '../systems/InputHandler.js'
 import UserInterface from '../systems/UserInterface.js'
 import Camera from '../systems/Camera.js'
+import EventBus from './EventBus.js'
 
 /**
  * Abstract base class för alla speltyper
@@ -8,12 +9,15 @@ import Camera from '../systems/Camera.js'
  * Subklasser (t.ex. PlatformerGame, SpaceShooterGame) implementerar specifik logik
  */
 export default class GameBase {
-    constructor(width, height) {
+    constructor(canvas, width, height) {
         // Förhindra direkt instansiering av GameBase
         if (new.target === GameBase) {
             throw new Error('GameBase är en abstract class och kan inte instansieras direkt')
         }
 
+        // Canvas reference
+        this.canvas = canvas
+        
         // Canvas dimensioner
         this.width = width
         this.height = height
@@ -29,6 +33,7 @@ export default class GameBase {
         this.currentMenu = null // Nuvarande meny som visas
 
         // Gemensamma system som alla spel behöver
+        this.eventBus = new EventBus()
         this.inputHandler = new InputHandler(this)
         this.ui = new UserInterface(this)
         

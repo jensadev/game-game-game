@@ -22,9 +22,6 @@ export default class Menu {
         this.optionColor = '#CCCCCC'
         this.selectedColor = '#FFD700'
         this.keyColor = '#4CAF50'
-        
-        // Track which keys have been pressed (för att undvika upprepade tryckningar)
-        this.lastKeys = new Set()
     }
     
     // Abstract methods - subclasses must override
@@ -37,43 +34,42 @@ export default class Menu {
     }
     
     update(deltaTime) {
-        const keys = this.game.inputHandler.keys
+        const input = this.game.inputHandler
         
-        // Kolla Enter för vald option
-        if (keys.has('Enter') && !this.lastKeys.has('Enter')) {
+        // Check Enter for selected option
+        if (input.isKeyPressed('Enter')) {
             const selectedOption = this.options[this.selectedIndex]
             if (selectedOption && selectedOption.action) {
                 selectedOption.action()
             }
         }
         
-        // Kolla om någon key-shortcut har tryckts
+        // Check if any key-shortcut has been pressed
         this.options.forEach(option => {
-            if (option.key && option.action && keys.has(option.key) && !this.lastKeys.has(option.key)) {
+            if (option.key && option.action && input.isKeyPressed(option.key)) {
                 option.action()
             }
         })
         
-        // Pil upp/ner för att navigera
-        if (keys.has('ArrowDown') && !this.lastKeys.has('ArrowDown')) {
-            // Hitta nästa valbara option (skippa null actions)
+        // Arrow down to navigate
+        if (input.isKeyPressed('ArrowDown')) {
+            // Find next selectable option (skip null actions)
             let newIndex = this.selectedIndex
             do {
                 newIndex = (newIndex + 1) % this.options.length
             } while (this.options[newIndex].action === null && newIndex !== this.selectedIndex)
             this.selectedIndex = newIndex
         }
-        if (keys.has('ArrowUp') && !this.lastKeys.has('ArrowUp')) {
-            // Hitta föregående valbara option (skippa null actions)
+        
+        // Arrow up to navigate
+        if (input.isKeyPressed('ArrowUp')) {
+            // Find previous selectable option (skip null actions)
             let newIndex = this.selectedIndex
             do {
                 newIndex = (newIndex - 1 + this.options.length) % this.options.length
             } while (this.options[newIndex].action === null && newIndex !== this.selectedIndex)
             this.selectedIndex = newIndex
         }
-        
-        // Uppdatera lastKeys
-        this.lastKeys = new Set(keys)
     }
     
     draw(ctx) {

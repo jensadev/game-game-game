@@ -9,26 +9,24 @@ export default class MainMenu extends Menu {
     getOptions() {
         const options = []
         
-        // Visa "Continue" om det finns sparad data
-        if (this.game.saveManager.hasSave()) {
-            const saveInfo = this.game.saveManager.getSaveInfo()
+        // Show "Continue" if there's saved data in default slot
+        if (this.game.saveManager.hasSave('slot_0')) {
+            const saveInfo = this.game.saveManager.getSaveInfo('slot_0')
             options.push({
                 text: `Continue (Level ${saveInfo.level})`,
                 key: 'c',
                 action: () => {
-                    this.game.loadGame()
-                    this.game.inputHandler.keys.clear()
+                    this.game.loadGame(0)
                 }
             })
         }
         
-        // Start Game (eller New Game om det finns en save)
+        // Start Game (or New Game if there's a save)
         options.push({
-            text: this.game.saveManager.hasSave() ? 'New Game' : 'Start Game',
+            text: this.game.saveManager.hasSave('slot_0') ? 'New Game' : 'Start Game',
             key: ' ',
             action: () => {
-                this.game.restart() // Restart för att starta från början
-                this.game.inputHandler.keys.clear()
+                this.game.restart() // Restart to start from beginning
             }
         })
         

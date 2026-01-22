@@ -10,7 +10,7 @@ const setupGame = (canvas) => {
     const ctx = canvas.getContext('2d')
 
     // Skapa plattformsspelet
-    const game = new PlatformerGame(canvas.width, canvas.height)
+    const game = new PlatformerGame(canvas, canvas.width, canvas.height)
     const debug = new DebugRenderer()
     let lastTime = 0
     // Game loop variabel så att vi kan stoppa den senare om vi vill

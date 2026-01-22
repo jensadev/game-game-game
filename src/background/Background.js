@@ -36,8 +36,8 @@ export default class Background {
         if (!this.imageLoaded) return
         
         // Beräkna parallax offset baserat på kamera och scroll speed
-        this.offsetX = camera.x * this.scrollSpeed
-        this.offsetY = camera.y * this.scrollSpeed
+        this.offsetX = camera.position.x * this.scrollSpeed
+        this.offsetY = camera.position.y * this.scrollSpeed
         
         if (this.tiled) {
             this.drawTiled(ctx, camera)

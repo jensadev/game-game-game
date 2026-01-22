@@ -1,4 +1,8 @@
-import GameObject from '../core/GameObject.js'
+import Entity from '../core/Entity.js'
+import Physics from '../components/Physics.js'
+import Sprite from '../components/Sprite.js'
+import Animator from '../components/Animator.js'
+import Collider from '../components/Collider.js'
 import StateMachine from '../core/StateMachine.js'
 import IdleState from './player-states/IdleState.js'
 import RunningState from './player-states/RunningState.js'
@@ -10,44 +14,62 @@ import runSprite from '../assets/Pixel Adventure 1/Main Characters/Ninja Frog/Ru
 import jumpSprite from '../assets/Pixel Adventure 1/Main Characters/Ninja Frog/Jump (32x32).png'
 import fallSprite from '../assets/Pixel Adventure 1/Main Characters/Ninja Frog/Fall (32x32).png'
 
-export default class Player extends GameObject {
+export default class Player extends Entity {
     constructor(game, x, y, width, height, color) {
         super(game, x, y, width, height)
         this.color = color
         
-        // Nuvarande hastighet (pixels per millisekund)
-        this.velocityX = 0
-        this.velocityY = 0
-
-        // Rörelsehastighet (hur snabbt spelaren accelererar/rör sig)
+        // Register sprites in ResourceManager
+        if (!game.resources) {
+            console.error('ResourceManager not found in game!')
+        } else {
+            game.resources.add('player_idle', idleSprite)
+            game.resources.add('player_run', runSprite)
+            game.resources.add('player_jump', jumpSprite)
+            game.resources.add('player_fall', fallSprite)
+        }
+        
+        // Add Physics component (velocity, gravity, handles position updates)
+        const physics = new Physics(0, 0)
+        physics.useGravity = true
+        this.addComponent(physics)
+        
+        // Add Sprite component (rendering)
+        const sprite = new Sprite(null, width, height)
+        sprite.frameWidth = 32
+        sprite.frameHeight = 32
+        this.addComponent(sprite)
+        
+        // Add Animator component (frame-based animation)
+        const animator = new Animator()
+        // Add animations: name, resourceKey, frameCount, frameInterval
+        animator.addAnimation('idle', 'player_idle', 11, 150)
+        animator.addAnimation('run', 'player_run', 12, 80)
+        animator.addAnimation('jump', 'player_jump', 1, 100)
+        animator.addAnimation('fall', 'player_fall', 1, 100)
+        animator.play('idle')
+        this.addComponent(animator)
+        
+        // Add Collider component (collision box, slightly smaller than sprite)
+        const collider = new Collider(width - 4, height - 4, 2, 2)
+        this.addComponent(collider)
+        
+        // Player-specific properties
         this.moveSpeed = 0.3
-        this.directionX = 0
-        this.directionY = 0
-
-        // Fysik egenskaper
-        this.jumpPower = -0.6 // negativ hastighet för att hoppa uppåt
-        this.isGrounded = false // om spelaren står på marken
+        this.jumpPower = -0.8
+        this.lastDirectionX = 1 // Remember last direction for shooting
         
         // Health system
         this.maxHealth = 3
         this.health = this.maxHealth
-        this.invulnerable = false // Immun mot skada efter att ha blivit träffad
+        this.invulnerable = false
         this.invulnerableTimer = 0
-        this.invulnerableDuration = 1000 // 1 sekund i millisekunder
+        this.invulnerableDuration = 1000
         
         // Shooting system
         this.canShoot = true
-        this.shootCooldown = 300 // millisekunder mellan skott
+        this.shootCooldown = 300
         this.shootCooldownTimer = 0
-        this.lastDirectionX = 1 // Kom ihåg senaste riktningen för skjutning
-        
-        // Sprite animation system - ladda sprites med olika hastigheter
-        this.loadSprite('idle', idleSprite, 11, 150)  // Långsammare idle
-        this.loadSprite('run', runSprite, 12, 80)     // Snabbare spring
-        this.loadSprite('jump', jumpSprite, 1)
-        this.loadSprite('fall', fallSprite, 1)
-        
-        this.currentAnimation = 'idle'
         
         // Setup state machine
         this.stateMachine = new StateMachine(this)
@@ -59,31 +81,24 @@ export default class Player extends GameObject {
     }
 
     update(deltaTime) {
-        // Apply physics
-        this.velocityY += this.game.gravity * deltaTime
+        // Update all components (Physics, Sprite, Animator, Collider)
+        super.update(deltaTime)
         
-        // Apply friction
-        if (this.velocityY > 0) {
-            this.velocityY -= this.game.friction * deltaTime
-            if (this.velocityY < 0) this.velocityY = 0
-        }
-
-        // Update position
-        this.x += this.velocityX * deltaTime
-        this.y += this.velocityY * deltaTime
+        // Handle input (Player's responsibility, NOT states')
+        this.handleInput(deltaTime)
         
-        // Update state machine (handles movement and animations)
+        // Determine state based on physics (NOT input)
+        this.updateState()
+        
+        // Update state machine (handles animations only)
         this.stateMachine.update(deltaTime)
         
-        // Update animation frame
-        this.updateAnimation(deltaTime)
-        
         // Shooting
-        if ((this.game.inputHandler.keys.has('x') || this.game.inputHandler.keys.has('X')) && this.canShoot) {
+        if ((this.game.inputHandler.isKeyPressed('x') || this.game.inputHandler.isKeyPressed('X')) && this.canShoot) {
             this.shoot()
         }
         
-        // Uppdatera invulnerability timer
+        // Update invulnerability timer
         if (this.invulnerable) {
             this.invulnerableTimer -= deltaTime
             if (this.invulnerableTimer <= 0) {
@@ -91,7 +106,7 @@ export default class Player extends GameObject {
             }
         }
         
-        // Uppdatera shoot cooldown
+        // Update shoot cooldown
         if (!this.canShoot) {
             this.shootCooldownTimer -= deltaTime
             if (this.shootCooldownTimer <= 0) {
@@ -100,14 +115,67 @@ export default class Player extends GameObject {
         }
     }
     
+    /**
+     * Handle input and update physics (Player's job, not states')
+     */
+    handleInput(deltaTime) {
+        const input = this.game.inputHandler
+        const physics = this.getComponent('Physics')
+        
+        if (!physics) return
+        
+        // Horizontal movement
+        if (input.isKeyHeld('ArrowLeft')) {
+            physics.velocity.x = -this.moveSpeed
+            this.lastDirectionX = -1
+        } else if (input.isKeyHeld('ArrowRight')) {
+            physics.velocity.x = this.moveSpeed
+            this.lastDirectionX = 1
+        } else {
+            physics.velocity.x = 0
+        }
+        
+        // Jumping (only when grounded)
+        if (input.isKeyPressed(' ') && physics.isGrounded) {
+            physics.velocity.y = this.jumpPower
+            // Note: isGrounded will be updated by CollisionManager next frame
+        }
+    }
+    
+    /**
+     * Determine state based on physics (NOT input)
+     * States react to what's happening, they don't control it
+     */
+    updateState() {
+        const physics = this.getComponent('Physics')
+        if (!physics) return
+        
+        // Determine state based on physics state
+        if (!physics.isGrounded) {
+            // In air
+            if (physics.velocity.y < 0) {
+                this.stateMachine.setState('jumping')
+            } else {
+                this.stateMachine.setState('falling')
+            }
+        } else {
+            // On ground
+            if (Math.abs(physics.velocity.x) > 0.01) {
+                this.stateMachine.setState('running')
+            } else {
+                this.stateMachine.setState('idle')
+            }
+        }
+    }
+    
     shoot() {
-        // Skjut i senaste riktningen spelaren rörde sig
+        // Shoot in last direction player moved
         const projectileX = this.x + this.width / 2
         const projectileY = this.y + this.height / 2
         
         this.game.addProjectile(projectileX, projectileY, this.lastDirectionX)
         
-        // Sätt cooldown
+        // Set cooldown
         this.canShoot = false
         this.shootCooldownTimer = this.shootCooldown
     }
@@ -118,48 +186,42 @@ export default class Player extends GameObject {
         this.health -= amount
         if (this.health < 0) this.health = 0
         
-        // Sätt invulnerability efter att ha tagit skada
+        // Emit event
+        this.game.eventBus.emit('player:damaged', {
+            amount: amount,
+            source: 'enemy',
+            newHealth: this.health
+        })
+        
+        // Set invulnerability after taking damage
         this.invulnerable = true
         this.invulnerableTimer = this.invulnerableDuration
     }
     
-    handlePlatformCollision(platform) {
-        const collision = this.getCollisionData(platform)
-        
-        if (collision) {
-            if (collision.direction === 'top' && this.velocityY > 0) {
-                // Kollision från ovan - spelaren landar på plattformen
-                this.y = platform.y - this.height
-                this.velocityY = 0
-                this.isGrounded = true
-            } else if (collision.direction === 'bottom' && this.velocityY < 0) {
-                // Kollision från nedan - spelaren träffar huvudet
-                this.y = platform.y + platform.height
-                this.velocityY = 0
-            } else if (collision.direction === 'left' && this.velocityX > 0) {
-                // Kollision från vänster
-                this.x = platform.x - this.width
-            } else if (collision.direction === 'right' && this.velocityX < 0) {
-                // Kollision från höger
-                this.x = platform.x + platform.width
-            }
+    // Helper method for states to set animation
+    setAnimation(animationName) {
+        const animator = this.getComponent('Animator')
+        if (animator) {
+            animator.play(animationName)
         }
     }
 
     draw(ctx, camera = null) {
-        // Blinka när spelaren är invulnerable
+        // Blink when player is invulnerable
         if (this.invulnerable) {
-            const blinkSpeed = 100 // millisekunder per blink
+            const blinkSpeed = 100
             if (Math.floor(this.invulnerableTimer / blinkSpeed) % 2 === 0) {
-                return // Skippa rendering denna frame för blink-effekt
+                return // Skip rendering this frame for blink effect
             }
         }
         
-        // Beräkna screen position (om camera finns)
-        const screenX = camera ? this.x - camera.x : this.x
-        const screenY = camera ? this.y - camera.y : this.y
+        // Update sprite flip based on direction
+        const sprite = this.getComponent('Sprite')
+        if (sprite) {
+            sprite.flipX = this.lastDirectionX === -1
+        }
         
-        // Försök rita sprite, annars fallback till rektangel
-        const spriteDrawn = this.drawSprite(ctx, camera, this.lastDirectionX === -1)
+        // Draw all components (Sprite component will handle rendering)
+        super.draw(ctx, camera)
     }
 }

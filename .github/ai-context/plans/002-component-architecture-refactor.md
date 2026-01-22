@@ -1,16 +1,21 @@
 # Plan 002: Component Architecture Refactor - Master Plan
 
-**Status:** In Progress  
+**Status:** ✅ Complete - Major Systems Refactoring & Entity Migrations  
 **Created:** 2026-01-21  
-**Branch Strategy:** 5 separate branches, merge sequentially  
+**Branch Strategy:** Working in single branch (33.5-top-down-gfx)  
 **Current Branch:** 33.5-top-down-gfx
 
 ## Progress Tracking
 
 **Started:** 2026-01-21  
-**Last Updated:** 2026-01-21  
-**Current Phase:** Planning & Documentation  
-**Context Sessions:** 1
+**Completed:** 2026-01-21  
+**Current Phase:** All entity migrations complete, ready for Phase 3 (Object Pooling) when needed  
+**Context Sessions:** 3
+
+### Session Status Summary
+- ✅ **Session 1:** Planning & Documentation Setup (40K tokens)
+- ✅ **Session 2:** Player Migration Complete (74K tokens)
+- ✅ **Session 3:** System Refactoring + Entity Migrations Complete (97K tokens)
 
 ### Context Sessions
 
@@ -36,18 +41,129 @@
 - **Next Session:** Begin Phase 1 implementation
 - **Ended Because:** Documentation setup complete, ready for implementation
 
+#### Session 2: Phase 1 Verification & Player Migration
+- **Date:** 2026-01-21
+- **Duration:** Full migration implementation  
+- **Token Usage:** ~74K
+- **Branch:** 33.5-top-down-gfx
+- **Accomplished:**
+  - Verified all Phase 1 foundation systems exist and are complete
+  - Discovered Phase 2 components already implemented
+  - Found StateMachine and EntityState already working
+  - **COMPLETED full Player migration to Entity + Components**
+  - Created CollisionManager system for centralized collision handling
+  - Updated Animator component to work with frame-based animations
+  - Updated Physics component to use game.gravity and Vector2
+  - Migrated all 4 player states (Idle, Running, Jumping, Falling) to use components
+  - Updated PlatformerGame to use CollisionManager and ResourceManager
+  - Removed collision logic from Player entity
+- **Key Findings:**
+  - ✅ Vector2.js - Complete and functional
+  - ✅ EventBus.js - Complete and functional
+  - ✅ ResourceManager.js - Complete (Vite-based, excellent!)
+  - ✅ DebugRenderer.js - Complete with F3 toggle
+  - ✅ InputHandler.js - Basic but functional (Set-based)
+  - ✅ All Component classes exist (Transform, Physics, Sprite, Collider, Animator)
+  - ✅ Entity.js with full component management
+  - ✅ StateMachine + Player states already implemented
+- **Decisions Made:**
+  - Keep InputHandler simple (no pressed/held/released needed yet)
+  - Phase 1 considered complete
+  - Complete clean migration with all components properly implemented
+  - Collision fully centralized in CollisionManager
+  - Animator uses ResourceManager for sprite images
+  - Physics component uses game.gravity instead of hardcoded values
+- **Next Session:** Test game, fix any issues, continue with Enemy migration
+- **Ended Because:** Player migration complete, awaiting testing
+
+#### Session 3: System Refactoring & All Entity Migrations ✅ COMPLETE
+- **Date:** 2026-01-21
+- **Duration:** Major refactoring and migrations
+- **Token Usage:** ~97K
+- **Branch:** 33.5-top-down-gfx
+- **Accomplished:**
+  - **SYSTEM REFACTORING (8 tasks complete):**
+    - ✅ Vector2.lerp() methods (static + instance) for smooth camera
+    - ✅ Camera refactored to use Vector2 (position/targetPosition), setTarget() API
+    - ✅ InputHandler upgraded with pressed/held/released states + mouse support
+    - ✅ EventBus integrated with 5 core events (coin:collected, player:damaged, enemy:killed, level:complete, game:over)
+    - ✅ CollisionManager expanded to handle ALL collision types centrally
+    - ✅ SaveGameManager rewritten for 3-slot system (getState/setState pattern)
+    - ✅ PlatformerGame.update() cleaned up (150 lines → 40 lines)
+    - ✅ API updates throughout codebase (camera.position, isKeyPressed/Held)
+  - **ENTITY MIGRATIONS (4 entities complete):**
+    - ✅ Enemy → Entity + Physics + Sprite + Collider (patrol AI preserved)
+    - ✅ Projectile → Entity + Physics + Sprite + Collider (no gravity)
+    - ✅ Coin → Entity + Sprite + Collider (bob animation preserved)
+    - ✅ Platform → Entity + Sprite + Collider (static, border rendering preserved)
+  - **BUGS FIXED (7 total):**
+    - ✅ EventBus undefined - Added to GameBase
+    - ✅ Canvas undefined - Added canvas parameter to GameBase
+    - ✅ Menu.js using old InputHandler API - Updated to isKeyPressed()
+    - ✅ SaveGameManager API mismatch - Rewrote for slot-based saves
+    - ✅ Input cleared too early - Moved inputHandler.update() to end of frame
+    - ✅ Enemies invisible - Added custom draw() methods to Enemy and Projectile
+    - ✅ Player bouncing/oscillating - Fixed collision velocity check (>= 0)
+- **Key Achievements:**
+  - Zero GameObject references in entity code
+  - Clean Entity-Component architecture throughout
+  - All collision logic centralized in CollisionManager
+  - Event-driven communication for game state changes
+  - 3-slot save system with version tracking
+  - Smooth camera following with lerp
+  - Frame-aware input system (pressed/held/released)
+  - Game fully functional and tested
+- **Decisions Made:**
+  - InputHandler NEEDED upgrade after all (pressed/held/released critical for proper input)
+  - InputHandler.update() must be called at END of frame, not start
+  - Entities with color-only sprites need custom draw() methods
+  - Collision velocity check must use >= 0, not > 0 to prevent oscillation
+  - Physics OR Transform, never both (Physics wins for moving entities)
+  - States control animation ONLY, not input or collision
+- **Testing Results:**
+  - ✅ Player movement, jump, shoot working
+  - ✅ Camera follows player smoothly
+  - ✅ Enemies render and patrol correctly
+  - ✅ Coins collect with sound and events
+  - ✅ Collisions working perfectly
+  - ✅ Menu navigation working
+  - ✅ No compilation errors
+  - ✅ No runtime errors
+- **Next Phase:** Phase 3 - Object pooling (when needed), Phase 4 - JSON level system
+- **Ended Because:** All planned work complete, documentation update needed
+
 ### Completed ✅
 - ✅ Initial architecture research (Session 1, 2026-01-21)
 - ✅ Documentation structure created (Session 1, 2026-01-21)
+- ✅ Phase 1: Foundation Systems (Session 2, 2026-01-21)
+  - ✅ Vector2 class (already existed, enhanced with lerp)
+  - ✅ EventBus (already existed, integrated with 5 core events)
+  - ✅ ResourceManager (already existed)
+  - ✅ InputHandler (upgraded with pressed/held/released + mouse support)
+  - ✅ DebugRenderer (already existed)
+- ✅ Phase 2: All Entity Migrations (Session 2-3, 2026-01-21) **COMPLETE**
+  - ✅ Player migrated to Entity + Components (Session 2)
+  - ✅ CollisionManager created and integrated (Session 2)
+  - ✅ Enemy migrated to Entity + Components (Session 3)
+  - ✅ Projectile migrated to Entity + Components (Session 3)
+  - ✅ Coin migrated to Entity + Components (Session 3)
+  - ✅ Platform migrated to Entity + Components (Session 3)
+- ✅ System Refactoring Complete (Session 3, 2026-01-21)
+  - ✅ Camera refactored with Vector2 and setTarget() API
+  - ✅ SaveGameManager rewritten for 3-slot system
+  - ✅ PlatformerGame.update() cleaned up (150 → 40 lines)
+  - ✅ All bugs fixed (7 total)
 
 ### In Progress ⏸️
-- ⏸️ Phase 1: Foundation systems (Not yet started)
+- None currently - all planned work complete!
 
 ### Blocked ❌
 - None currently
 
 ### Deferred 💤
-- None currently
+- Phase 3: Object pooling for projectiles (when needed)
+- Phase 4: JSON-based level system (future enhancement)
+- Phase 5: Polish features (loading screen, advanced debug)
 
 ## Design Decisions During Implementation
 
@@ -59,14 +175,59 @@
 | 2026-01-21 | Keep states small and clean | Avoid bloat, maintain simplicity | States focused on animation/behavior only | ✅ Decided |
 | 2026-01-21 | Physics constants (gravity, friction) stay in game | Centralized config, accessed via game reference | Entities access via this.game.gravity | ✅ Decided |
 | 2026-01-21 | Move away from GameObject entirely | Complete architectural shift to Entity-Component | GameObject.js will be deleted, all entities migrate to Entity | ✅ Decided |
+| 2026-01-21 | InputHandler.update() at END of frame | Pressed/Released sets must persist until all entities process input | Moved from start to end of update loop | ✅ Decided |
+| 2026-01-21 | Physics OR Transform, never both | Position tracking conflict between two systems | Physics wins for moving entities, removed Transform | ✅ Decided |
+| 2026-01-21 | Camera uses Vector2 for position | Smooth lerp interpolation needs vector math | position and targetPosition as Vector2 | ✅ Decided |
+| 2026-01-21 | EventBus for game state changes | Loose coupling between systems | 5 core events: coin, damage, enemy, level, game | ✅ Decided |
+| 2026-01-21 | 3-slot save system with getState/setState | User-friendly multiple saves | SaveGameManager slot-based API | ✅ Decided |
+| 2026-01-21 | Collision velocity check >= 0 not > 0 | Prevents oscillation when standing still | Fixed player bouncing bug | ✅ Decided |
 
 ## Deviations from Original Plan
 
 | Step | Original Plan | What Actually Happened | Reason | Approved By |
 |------|---------------|------------------------|--------|-------------|
-| N/A | N/A | N/A | N/A | N/A |
+| 2026-01-21 | Skip Phase 1 implementation | Phase 1 systems already exist | Systems were implemented previously, just not documented in plan | Session 2 verification |
+| 2026-01-21 | Player had duplicate code | Old GameObject code not fully removed in first pass | Incomplete text replacement left loadSprite calls | Session 2 fix |
+| 2026-01-21 | Changed to single branch strategy | Originally planned 5 separate branches, worked in single branch instead | More efficient for incremental changes, easier to test | Session 3 decision |
+| 2026-01-21 | InputHandler DID need upgrade | Session 2 decided to keep simple, Session 3 found pressed/held/released critical | Jump/shoot needed pressed, movement needed held | Session 3 revision |
+| 2026-01-21 | Enemy/Projectile need custom draw() | Sprite component only renders images, not colors | Entities with color property need override | Session 3 discovery |
 
-**Note:** Update this table during implementation if changes occur.
+## Critical Issues Found
+
+| Issue | Description | Impact | Status | Resolution |
+|-------|-------------|--------|--------|------------|
+| Player loadSprite() error | Duplicate code from GameObject remained after migration | Game crash on player creation | ✅ Fixed | Removed duplicate loadSprite calls and old animation code (Session 2) |
+| EventBus undefined | PlatformerGame.setupEventListeners() couldn't access eventBus | Game crash on initialization | ✅ Fixed | Added EventBus to GameBase constructor (Session 3) |
+| Canvas undefined | InputHandler couldn't get canvas for mouse position | Game crash on mouse input | ✅ Fixed | Added canvas parameter to GameBase (Session 3) |
+| Menu using old API | Menu.js still using inputHandler.keys.has() | Navigation not working | ✅ Fixed | Updated to isKeyPressed() throughout (Session 3) |
+| SaveGameManager API mismatch | Calling save(key, data) but old API was save(data) | Save/load broken | ✅ Fixed | Rewrote for slot-based system (Session 3) |
+| Input cleared too early | inputHandler.update() at start of frame cleared before entities read | Jump/shoot not working | ✅ Fixed | Moved update() to end of frame (Session 3) |
+| Enemies invisible | Enemy and Projectile had no draw() method | Entities rendered but not visible | ✅ Fixed | Added custom draw() methods for color rendering (Session 3) |
+| Player bouncing | Collision velocity check > 0 didn't catch velocity = 0 | Player oscillating on platforms | ✅ Fixed | Changed to >= 0 in collision checks (Session 3) |
+
+## Phase 2 Refactoring Tasks
+
+### ✅ ALL TASKS COMPLETE (Session 3, 2026-01-21)
+
+All entity migrations finished. Architecture is now fully Entity-Component based with zero GameObject references in entity code.
+
+### Migration Completed
+1. ✅ Player (Session 2) - Entity + Physics + Sprite + Animator + Collider
+2. ✅ Enemy (Session 3) - Entity + Physics + Sprite + Collider (patrol AI preserved)
+3. ✅ Projectile (Session 3) - Entity + Physics + Sprite + Collider (no gravity)
+4. ✅ Coin (Session 3) - Entity + Sprite + Collider (bob animation preserved)
+5. ✅ Platform (Session 3) - Entity + Sprite + Collider (static, border rendering preserved)
+
+### System Enhancements Completed
+- ✅ Vector2.lerp() for smooth camera
+- ✅ Camera Vector2 refactor + setTarget() API
+- ✅ InputHandler pressed/held/released + mouse support
+- ✅ EventBus integration (5 core events)
+- ✅ CollisionManager handles ALL collision types
+- ✅ SaveGameManager 3-slot system
+- ✅ PlatformerGame.update() cleanup (150 → 40 lines)
+
+**Note:** GameObject.js can now be deleted if desired - no longer used by any entities.
 
 ## Overview
 
