@@ -16,6 +16,7 @@ export default class Physics extends Component {
         // Physics properties
         this.friction = 0.00015  // air resistance
         this.useGravity = true
+        this.useAirResistance = true  // Can be disabled for projectiles
         this.isGrounded = false  // Set by CollisionManager
         this.gravityScale = 1.0  // Multiplier for gravity
     }
@@ -29,7 +30,7 @@ export default class Physics extends Component {
         }
         
         // Apply air resistance to horizontal velocity only
-        if (this.entity.game && this.entity.game.airResistance) {
+        if (this.useAirResistance && this.entity.game && this.entity.game.airResistance) {
             const resistance = this.entity.game.airResistance * deltaTime
             if (Math.abs(this.velocity.x) > resistance) {
                 this.velocity.x -= Math.sign(this.velocity.x) * resistance

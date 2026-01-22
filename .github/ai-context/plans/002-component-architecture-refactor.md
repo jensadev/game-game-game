@@ -222,6 +222,7 @@
 | 2026-01-22 | Enemies don't collide with each other | Prevents AI from getting stuck on patrol | Disabled enemy-enemy collisions | ✅ Decided |
 | 2026-01-22 | Object pooling for projectiles | Reduce GC pressure from constant create/destroy | Reuse projectile instances via pool | ✅ Decided |
 | 2026-01-22 | Pool size 20 initial, 50 max | Balance memory vs pool exhaustion | Enough for most gameplay without waste | ✅ Decided |
+| 2026-01-22 | Projectiles exempt from air resistance | Air resistance was stopping projectiles at 313px | Added useAirResistance flag to Physics | ✅ Decided |
 
 ## Deviations from Original Plan
 
@@ -248,6 +249,7 @@
 | Projectiles freezing | Projectiles marked for deletion on platform collision | Projectiles fly short distance then stop | ✅ Fixed | Re-enabled platform collision (projectiles should stop at walls) (Session 4) |
 | Projectile visual freeze | Projectiles appear frozen at 800px until enemy hit | reset() called on release cleared velocity while still drawing | ✅ Fixed | Move reset() to acquire() instead of release() (Session 4) |
 | Projectiles not removed | Projectiles marked for deletion remain visible at max distance | No early return in update/draw when markedForDeletion | ✅ Fixed | Added early returns in update() and draw() methods (Session 4) |
+| Projectiles stop at 313px | Air resistance was slowing projectiles to zero velocity | Physics component applied air resistance to all entities | ✅ Fixed | Added useAirResistance flag, disabled for projectiles (Session 4) |
 | Enemies stuck on each other | Enemy-enemy collisions cause AI to stop patrolling | Enemies clump together and freeze | ✅ Fixed | Disabled enemy-enemy collisions (Session 4) |) |
 | Player bouncing | Collision velocity check > 0 didn't catch velocity = 0 | Player oscillating on platforms | ✅ Fixed | Changed to >= 0 in collision checks (Session 3) |
 

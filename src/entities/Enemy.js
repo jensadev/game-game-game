@@ -90,15 +90,12 @@ export default class Enemy extends Entity {
         }
     }
     
-    draw(ctx, camera = null) {
-        const cameraX = camera ? camera.position.x : 0
-        const cameraY = camera ? camera.position.y : 0
-        const screenX = this.x - cameraX
-        const screenY = this.y - cameraY
+    draw(ctx, camera) {
+        const screenPos = camera.worldToScreen(this.x, this.y)
         
         // Draw enemy as red rectangle
         const sprite = this.getComponent('Sprite')
         ctx.fillStyle = sprite?.color || 'red'
-        ctx.fillRect(screenX, screenY, this.width, this.height)
+        ctx.fillRect(screenPos.x, screenPos.y, this.width, this.height)
     }
 }

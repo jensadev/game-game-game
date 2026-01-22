@@ -45,12 +45,9 @@ export default class Coin extends Entity {
         this.sound.play().catch(e => console.log('Coin sound play failed:', e))
     }
 
-    draw(ctx, camera = null) {
+    draw(ctx, camera) {
         // Calculate screen position
-        const cameraX = camera ? camera.position.x : 0
-        const cameraY = camera ? camera.position.y : 0
-        const screenX = this.x - cameraX
-        const screenY = this.y - cameraY
+        const screenPos = camera.worldToScreen(this.x, this.y)
         
         // Calculate y-position with bob
         const bobY = Math.sin(this.bobOffset) * this.bobDistance
@@ -59,7 +56,7 @@ export default class Coin extends Entity {
         const sprite = this.getComponent('Sprite')
         ctx.fillStyle = sprite?.color || 'yellow'
         ctx.beginPath()
-        ctx.arc(screenX + this.size / 2, screenY + this.size / 2 + bobY, this.size / 2, 0, Math.PI * 2)
+        ctx.arc(screenPos.x + this.width / 2, screenPos.y + this.height / 2 + bobY, this.width / 2, 0, Math.PI * 2)
         ctx.fill()
     }
 }

@@ -1,8 +1,12 @@
 /**
  * CollisionManager - Centralized collision detection and response
  * 
+ * Single-phase collision system (like Unity/Godot):
+ * 1. Physics runs (entities move)
+ * 2. Detect collisions and resolve overlaps
+ * 3. Set isGrounded based on collision results
+ * 
  * Handles all collision logic so entities don't need to know about platforms.
- * Checks entity-platform collisions and resolves them properly.
  */
 export default class CollisionManager {
     constructor(game) {
@@ -10,26 +14,8 @@ export default class CollisionManager {
     }
     
     /**
-     * Phase 1: Update ground state BEFORE physics runs
-     * This determines isGrounded so Physics can apply gravity correctly
-     */
-    updateGroundState() {
-        // Check if player is grounded
-        if (this.game.player) {
-            this.updateEntityGroundState(this.game.player)
-        }
-        
-        // Check if enemies are grounded
-        if (this.game.enemies) {
-            this.game.enemies.forEach(enemy => {
-                this.updateEntityGroundState(enemy)
-            })
-        }
-    }
-    
-    /**
-     * Phase 2: Resolve collisions AFTER physics runs
-     * This fixes overlaps and handles collision interactions
+     * Resolve all collisions and handle interactions
+     * Called AFTER physics has moved entities
      */
     resolveCollisions() {
         // Resolve player vs platforms
@@ -61,39 +47,15 @@ export default class CollisionManager {
     }
     
     /**
-     * Check if entity is standing on ground (doesn't modify position)
-     * Sets isGrounded flag for Physics to use
-     */
-    updateEntityGroundState(entity) {
-        const physics = entity.getComponent?.('Physics')
-        if (!physics) return
-        
-        // Check if entity is on or very close to a platform
-        const groundTolerance = 2  // pixels
-        let foundGround = false
-        
-        this.game.platforms.forEach(platform => {
-            // Check if entity is above platform and close to it
-            const isAbove = entity.y + entity.height <= platform.y + groundTolerance
-            const isNearby = entity.y + entity.height >= platform.y - groundTolerance
-            const isAlignedX = entity.x + entity.width > platform.x && entity.x < platform.x + platform.width
-            
-            // Entity is grounded if: on platform surface, not moving up, aligned horizontally
-            if (isAbove && isNearby && isAlignedX && physics.velocity.y >= 0) {
-                foundGround = true
-            }
-        })
-        
-        physics.isGrounded = foundGround
-    }
-    
-    /**
-     * Resolve entity-platform collisions by correcting overlaps
-     * This runs AFTER physics has moved entities
+     * Resolve entity-platform collisions and set grounded state
+     * Handles collision detection, overlap correction, and grounded determination in one pass
      */
     resolveEntityPlatformCollisions(entity) {
         const physics = entity.getComponent?.('Physics')
         if (!physics) return
+        
+        // Assume not grounded until we find a platform below
+        physics.isGrounded = false
         
         // Check collision with each platform and resolve overlaps
         this.game.platforms.forEach(platform => {
@@ -104,6 +66,7 @@ export default class CollisionManager {
                     // Landing on platform from above - snap to surface
                     entity.y = platform.y - entity.height
                     physics.velocity.y = 0
+                    physics.isGrounded = true  // Standing on platform
                 } else if (collision.direction === 'bottom' && physics.velocity.y < 0) {
                     // Hit head on platform from below
                     entity.y = platform.y + platform.height

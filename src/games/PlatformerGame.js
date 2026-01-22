@@ -42,9 +42,8 @@ export default class PlatformerGame extends GameBase {
         this.coins = []
         this.projectiles = []
         
-        // Background arrays (sätts av levels)
-        this.backgrounds = []
-        this.backgroundObjects = []
+        // TODO: Implement parallax background system with static visual entities
+        // (non-interactive, decorative layer behind gameplay)
         
         // Systems
         this.saveManager = new SaveGameManager('platformer-save')
@@ -125,10 +124,6 @@ export default class PlatformerGame extends GameBase {
         this.enemies = levelData.enemies
         this.totalCoins = this.coins.length
         
-        // Sätt background data
-        this.backgrounds = levelData.backgrounds
-        this.backgroundObjects = levelData.backgroundObjects
-        
         // Återställ mynt-räknare för denna level
         this.coinsCollected = 0
         
@@ -173,7 +168,6 @@ export default class PlatformerGame extends GameBase {
             // Initialize with new position and direction
             projectile.init(x, y, directionX)
             this.projectiles.push(projectile)
-            console.log(`[Game] Projectile spawned at (${x}, ${y}). Total active: ${this.projectiles.length}`)
         } else {
             console.warn('Projectile pool exhausted - increase maxSize')
         }
@@ -307,13 +301,10 @@ export default class PlatformerGame extends GameBase {
             return
         }
         
-        // Phase 1: Check ground state BEFORE physics applies gravity
-        this.collisionManager.updateGroundState()
-        
-        // Phase 2: Update all entities (physics uses correct isGrounded)
+        // Update all entities (physics runs)
         this.updateEntities(deltaTime)
         
-        // Phase 3: Resolve collisions and handle interactions
+        // Resolve collisions and handle interactions (sets isGrounded)
         this.collisionManager.resolveCollisions()
         
         // Update camera
@@ -360,9 +351,6 @@ export default class PlatformerGame extends GameBase {
      * Update all game entities
      */
     updateEntities(deltaTime) {
-        // Backgrounds
-        this.backgroundObjects.forEach(obj => obj.update(deltaTime))
-        
         // Level entities
         this.platforms.forEach(platform => platform.update(deltaTime))
         this.coins.forEach(coin => coin.update(deltaTime))
@@ -377,18 +365,12 @@ export default class PlatformerGame extends GameBase {
         this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion)
         
         // Return projectiles to pool before removing
-        const projectilesToRemove = []
         this.projectiles.forEach(projectile => {
             if (projectile.markedForDeletion) {
-                projectilesToRemove.push(projectile)
                 this.projectilePool.release(projectile)
             }
         })
         this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion)
-        
-        if (projectilesToRemove.length > 0) {
-            console.log(`Removed ${projectilesToRemove.length} projectiles. Active: ${this.projectiles.length}, Pool stats:`, this.projectilePool.getStats())
-        }
         
         // World bounds for player
         this.player.x = Math.max(0, Math.min(this.player.x, this.worldWidth - this.player.width))
@@ -416,16 +398,6 @@ export default class PlatformerGame extends GameBase {
     }
 
     draw(ctx) {
-        // Draw backgrounds FIRST (furthest back)
-        this.backgrounds.forEach(bg => bg.draw(ctx, this.camera))
-        
-        // Draw background objects
-        this.backgroundObjects.forEach(obj => {
-            if (this.camera.isVisible(obj)) {
-                obj.draw(ctx, this.camera)
-            }
-        })
-        
         // Draw all platforms with camera offset
         this.platforms.forEach(platform => {
             if (this.camera.isVisible(platform)) {

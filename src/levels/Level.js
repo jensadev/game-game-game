@@ -17,10 +17,6 @@ export default class Level {
         this.coins = []
         this.enemies = []
         
-        // Background data
-        this.backgrounds = []
-        this.backgroundObjects = []
-        
         // Player spawn position
         this.playerSpawnX = 50
         this.playerSpawnY = 50
@@ -51,27 +47,9 @@ export default class Level {
     }
 
     /**
-     * Abstract method - måste implementeras av subklasser
-     * Skapar bakgrundslager för leveln
-     */
-    createBackgrounds() {
-        throw new Error('createBackgrounds() måste implementeras av subklass')
-    }
-
-    /**
-     * Abstract method - måste implementeras av subklasser
-     * Skapar bakgrundsobjekt (moln, etc) för leveln
-     */
-    createBackgroundObjects() {
-        throw new Error('createBackgroundObjects() måste implementeras av subklass')
-    }
-
-    /**
      * Initierar leveln - anropar alla create-metoder
      */
     init() {
-        this.createBackgrounds()
-        this.createBackgroundObjects()
         this.createPlatforms()
         this.createCoins()
         this.createEnemies()
@@ -85,8 +63,6 @@ export default class Level {
             platforms: this.platforms,
             coins: this.coins,
             enemies: this.enemies,
-            backgrounds: this.backgrounds,
-            backgroundObjects: this.backgroundObjects,
             playerSpawnX: this.playerSpawnX,
             playerSpawnY: this.playerSpawnY
         }

@@ -3,8 +3,8 @@ import Vector2 from './Vector2.js'
 /**
  * Entity - Component-based game object
  * 
- * Unlike GameObject which uses inheritance, Entity uses composition.
- * Add components to give entities different capabilities.
+ * Uses composition pattern - add components to give entities different capabilities.
+ * Components handle specific behaviors (physics, rendering, collision, etc).
  * 
  * Example:
  *   const player = new Entity(game, 100, 100, 32, 32)
@@ -98,40 +98,5 @@ export default class Entity {
                 component.draw(ctx, camera)
             }
         }
-    }
-    
-    /**
-     * Collision detection (AABB)
-     * @param {Entity|GameObject} other - Other entity
-     * @returns {boolean} True if colliding
-     */
-    intersects(other) {
-        return this.x < other.x + other.width &&
-               this.x + this.width > other.x &&
-               this.y < other.y + other.height &&
-               this.y + this.height > other.y
-    }
-    
-    /**
-     * Get collision data with direction
-     * @param {Entity|GameObject} other - Other entity
-     * @returns {Object|null} Collision data or null
-     */
-    getCollisionData(other) {
-        if (!this.intersects(other)) return null
-        
-        const overlapLeft = (this.x + this.width) - other.x
-        const overlapRight = (other.x + other.width) - this.x
-        const overlapTop = (this.y + this.height) - other.y
-        const overlapBottom = (other.y + other.height) - this.y
-        
-        const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom)
-        
-        if (minOverlap === overlapTop) return { direction: 'top' }
-        if (minOverlap === overlapBottom) return { direction: 'bottom' }
-        if (minOverlap === overlapLeft) return { direction: 'left' }
-        if (minOverlap === overlapRight) return { direction: 'right' }
-        
-        return null
     }
 }

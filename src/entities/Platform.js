@@ -24,20 +24,17 @@ export default class Platform extends Entity {
         super.update(deltaTime)
     }
 
-    draw(ctx, camera = null) {
+    draw(ctx, camera) {
         // Calculate screen position
-        const cameraX = camera ? camera.position.x : 0
-        const cameraY = camera ? camera.position.y : 0
-        const screenX = this.x - cameraX
-        const screenY = this.y - cameraY
+        const screenPos = camera.worldToScreen(this.x, this.y)
         
         // Draw platform
         ctx.fillStyle = this.color
-        ctx.fillRect(screenX, screenY, this.width, this.height)
+        ctx.fillRect(screenPos.x, screenPos.y, this.width, this.height)
         
         // Draw border for depth
         ctx.strokeStyle = '#654321'
         ctx.lineWidth = 2
-        ctx.strokeRect(screenX, screenY, this.width, this.height)
+        ctx.strokeRect(screenPos.x, screenPos.y, this.width, this.height)
     }
 }

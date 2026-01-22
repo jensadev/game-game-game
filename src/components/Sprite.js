@@ -94,22 +94,18 @@ export default class Sprite extends Component {
         if (this.spriteHeight === null) this.spriteHeight = this.entity.height
     }
     
-    draw(ctx, camera = null) {
+    draw(ctx, camera) {
         if (!this.image || !this.imageLoaded) return
         
-        const cameraX = camera ? camera.position.x : 0
-        const cameraY = camera ? camera.position.y : 0
-        
-        const drawX = this.entity.x - cameraX
-        const drawY = this.entity.y - cameraY
+        const screenPos = camera.worldToScreen(this.entity.x, this.entity.y)
         
         ctx.save()
         
         // Handle flipping
         if (this.flipX || this.flipY) {
             ctx.translate(
-                drawX + this.spriteWidth / 2,
-                drawY + this.spriteHeight / 2
+                screenPos.x + this.spriteWidth / 2,
+                screenPos.y + this.spriteHeight / 2
             )
             ctx.scale(this.flipX ? -1 : 1, this.flipY ? -1 : 1)
             ctx.translate(
@@ -135,8 +131,8 @@ export default class Sprite extends Component {
                 this.frameY * this.frameHeight,
                 this.frameWidth,
                 this.frameHeight,
-                drawX,
-                drawY,
+                screenPos.x,
+                screenPos.y,
                 this.spriteWidth,
                 this.spriteHeight
             )

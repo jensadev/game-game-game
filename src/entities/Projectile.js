@@ -10,6 +10,7 @@ export default class Projectile extends Entity {
         // Add Physics component (no gravity for projectiles)
         const physics = new Physics(directionX * 0.8, 0)
         physics.useGravity = false
+        physics.useAirResistance = false  // No air resistance - projectiles fly straight
         this.addComponent(physics)
         
         // Add Sprite component
@@ -74,24 +75,20 @@ export default class Projectile extends Entity {
         const distanceTraveled = Math.abs(this.x - this.startX)
         if (distanceTraveled > this.maxDistance) {
             this.markedForDeletion = true
-            console.log(`Projectile marked for deletion at distance ${distanceTraveled}px`)
         }
     }
     
-    draw(ctx, camera = null) {
+    draw(ctx, camera) {
         // Don't draw if marked for deletion
         if (this.markedForDeletion) {
             return
         }
         
-        const cameraX = camera ? camera.position.x : 0
-        const cameraY = camera ? camera.position.y : 0
-        const screenX = this.x - cameraX
-        const screenY = this.y - cameraY
+        const screenPos = camera.worldToScreen(this.x, this.y)
         
         // Draw projectile as orange rectangle
         const sprite = this.getComponent('Sprite')
         ctx.fillStyle = sprite?.color || 'orange'
-        ctx.fillRect(screenX, screenY, this.width, this.height)
+        ctx.fillRect(screenPos.x, screenPos.y, this.width, this.height)
     }
 }

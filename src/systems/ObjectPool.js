@@ -38,7 +38,6 @@ export default class ObjectPool {
         // Try to reuse from available pool
         if (this.available.length > 0) {
             obj = this.available.pop()
-            console.log(`[Pool] Reusing object from available pool. Available: ${this.available.length}, InUse: ${this.inUse.size}`)
             // Reset when acquiring (not when releasing) to avoid visual glitches
             if (obj.reset) {
                 obj.reset()
@@ -47,7 +46,6 @@ export default class ObjectPool {
             // Create new if pool is empty (and under max size)
             if (this.maxSize === 0 || this.inUse.size < this.maxSize) {
                 obj = this.factory()
-                console.log(`[Pool] Created new object. Available: ${this.available.length}, InUse: ${this.inUse.size}`)
             } else {
                 // Pool exhausted - return null or oldest object
                 console.warn('ObjectPool exhausted!')
@@ -56,7 +54,6 @@ export default class ObjectPool {
         }
         
         this.inUse.add(obj)
-        console.log(`[Pool] Object acquired. Available: ${this.available.length}, InUse: ${this.inUse.size}`)
         return obj
     }
     
@@ -65,10 +62,8 @@ export default class ObjectPool {
      * @param {Object} obj - Object to release
      */
     release(obj) {
-        console.log(`[Pool] Attempting to release object. InUse has it: ${this.inUse.has(obj)}`)
-        
         if (!this.inUse.has(obj)) {
-            console.warn('[Pool] Trying to release object not in pool!')
+            console.warn('Trying to release object not in pool')
             return
         }
         
@@ -81,8 +76,6 @@ export default class ObjectPool {
         if (this.maxSize === 0 || this.available.length < this.maxSize) {
             this.available.push(obj)
         }
-        
-        console.log(`[Pool] Object released. Available: ${this.available.length}, InUse: ${this.inUse.size}`)
     }
     
     /**
