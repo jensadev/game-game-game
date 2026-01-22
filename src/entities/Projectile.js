@@ -8,7 +8,7 @@ export default class Projectile extends Entity {
         super(game, x, y, 12, 6)
         
         // Add Physics component (no gravity for projectiles)
-        const physics = new Physics(directionX * 0.5, 0)
+        const physics = new Physics(directionX * 0.8, 0)
         physics.useGravity = false
         this.addComponent(physics)
         
@@ -27,7 +27,46 @@ export default class Projectile extends Entity {
         this.maxDistance = 800 // Max distance before deletion
     }
     
+    /**
+     * Reset projectile for object pooling
+     */
+    reset() {
+        this.markedForDeletion = false
+        this.x = 0
+        this.y = 0
+        this.startX = 0
+        
+        const physics = this.getComponent('Physics')
+        if (physics) {
+            physics.velocity.x = 0
+            physics.velocity.y = 0
+        }
+    }
+    
+    /**
+     * Initialize/reinitialize projectile (called when spawning from pool)
+     */
+    init(x, y, directionX) {
+        this.x = x
+        this.y = y
+        this.startX = x
+        this.directionX = directionX
+        this.markedForDeletion = false
+        
+        const physics = this.getComponent('Physics')
+        if (physics) {
+            // Higher velocity for better projectile speed (0.8 pixels/ms = ~480 pixels/sec)
+            physics.velocity.x = directionX * 0.8
+            physics.velocity.y = 0
+        }
+    }
+    
     update(deltaTime) {
+        // Skip update if marked for deletion
+        if (this.markedForDeletion) {
+            return
+        }
+        
         // Update all components
         super.update(deltaTime)
         
@@ -35,10 +74,16 @@ export default class Projectile extends Entity {
         const distanceTraveled = Math.abs(this.x - this.startX)
         if (distanceTraveled > this.maxDistance) {
             this.markedForDeletion = true
+            console.log(`Projectile marked for deletion at distance ${distanceTraveled}px`)
         }
     }
     
     draw(ctx, camera = null) {
+        // Don't draw if marked for deletion
+        if (this.markedForDeletion) {
+            return
+        }
+        
         const cameraX = camera ? camera.position.x : 0
         const cameraY = camera ? camera.position.y : 0
         const screenX = this.x - cameraX

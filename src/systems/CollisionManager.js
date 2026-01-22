@@ -223,6 +223,7 @@ export default class CollisionManager {
     
     /**
      * Check projectiles vs platforms
+     * Projectiles are destroyed when they hit walls/platforms
      */
     checkProjectilePlatformCollisions() {
         if (!this.game.projectiles || !this.game.platforms) return
@@ -237,18 +238,11 @@ export default class CollisionManager {
     }
     
     /**
-     * Check enemies vs enemies (bounce off each other)
+     * Check enemies vs enemies
+     * DISABLED: Enemies pass through each other
      */
     checkEnemyEnemyCollisions() {
-        if (!this.game.enemies) return
-        
-        this.game.enemies.forEach((enemy, index) => {
-            this.game.enemies.slice(index + 1).forEach(otherEnemy => {
-                if (this.intersects(enemy, otherEnemy)) {
-                    enemy.handleEnemyCollision?.(otherEnemy)
-                    otherEnemy.handleEnemyCollision?.(enemy)
-                }
-            })
-        })
+        // Disabled - enemies don't collide with each other
+        // This prevents them from getting stuck and allows overlap
     }
 }

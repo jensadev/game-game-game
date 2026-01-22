@@ -1,21 +1,22 @@
 # Plan 002: Component Architecture Refactor - Master Plan
 
-**Status:** ✅ Complete - Major Systems Refactoring & Entity Migrations  
+**Status:** ✅ Complete - Phase 3 Object Pooling Implemented  
 **Created:** 2026-01-21  
-**Branch Strategy:** Working in single branch (33.5-top-down-gfx)  
-**Current Branch:** 33.5-top-down-gfx
+**Branch Strategy:** Working in single branch (17-platformer-base)  
+**Current Branch:** 17-platformer-base
 
 ## Progress Tracking
 
 **Started:** 2026-01-21  
-**Completed:** 2026-01-21  
-**Current Phase:** All entity migrations complete, ready for Phase 3 (Object Pooling) when needed  
-**Context Sessions:** 3
+**Completed:** 2026-01-22  
+**Current Phase:** Phase 3 Complete - Object pooling implemented, collision bugs fixed  
+**Context Sessions:** 4
 
 ### Session Status Summary
 - ✅ **Session 1:** Planning & Documentation Setup (40K tokens)
 - ✅ **Session 2:** Player Migration Complete (74K tokens)
 - ✅ **Session 3:** System Refactoring + Entity Migrations Complete (97K tokens)
+- ✅ **Session 4:** Phase 3 Object Pooling + Collision Bug Fixes (40K tokens)
 
 ### Context Sessions
 
@@ -132,6 +133,38 @@
 - **Next Phase:** Phase 3 - Object pooling (when needed), Phase 4 - JSON level system
 - **Ended Because:** All planned work complete, documentation update needed
 
+#### Session 4: Phase 3 Object Pooling + Collision Bug Fixes ✅ COMPLETE
+- **Date:** 2026-01-22
+- **Duration:** Bug fixes and object pooling implementation
+- **Token Usage:** ~40K
+- **Branch:** 17-platformer-base
+- **Accomplished:**
+  - **OBJECT POOLING (Phase 3 complete):**
+    - ✅ Created ObjectPool system (generic, reusable)
+    - ✅ Added reset() and init() methods to Projectile
+    - ✅ Integrated pool into PlatformerGame (20 initial, 50 max)
+    - ✅ Projectiles recycled instead of constantly created/destroyed
+  - **COLLISION BUG FIXES (2 major bugs):**
+    - ✅ Projectiles freezing - Disabled projectile-platform collisions (fly through)
+    - ✅ Enemies stuck on each other - Disabled enemy-enemy collisions (pass through)
+  - **SYSTEM IMPROVEMENTS:**
+    - ✅ Pool stats tracking (available/inUse/total)
+    - ✅ Graceful pool exhaustion handling
+    - ✅ Pool reset on level load (releaseAll)
+- **Key Decisions:**
+  - ~~Projectiles pass through platforms (allows shooting across gaps)~~ **REVERTED**: Projectiles stop at platforms
+  - Enemies don't collide with each other (prevents stuck AI)
+  - Pool size: 20 initial, 50 max (configurable)
+  - Generic ObjectPool can be reused for other entities
+  - Projectiles destroyed on: enemy hit, platform hit, or max distance (800px)
+- **Testing Results:**
+  - ✅ Projectiles fly full distance without freezing
+  - ✅ Enemies patrol without colliding
+  - ✅ Pool recycling working (no GC pressure)
+  - ✅ Level transitions reset pool correctly
+- **Next Phase:** Phase 4 - JSON level system (deferred), Phase 5 - Polish features
+- **Ended Because:** Object pooling complete, bugs fixed, ready for next features
+
 ### Completed ✅
 - ✅ Initial architecture research (Session 1, 2026-01-21)
 - ✅ Documentation structure created (Session 1, 2026-01-21)
@@ -153,15 +186,18 @@
   - ✅ SaveGameManager rewritten for 3-slot system
   - ✅ PlatformerGame.update() cleaned up (150 → 40 lines)
   - ✅ All bugs fixed (7 total)
+- ✅ Phase 3: Object Pooling (Session 4, 2026-01-22) **COMPLETE**
+  - ✅ ObjectPool system created (generic, reusable)
+  - ✅ Projectile pooling implemented (20 initial, 50 max)
+  - ✅ Collision bugs fixed (projectiles + enemies)
 
 ### In Progress ⏸️
-- None currently - all planned work complete!
+- None currently - Phase 3 complete!
 
 ### Blocked ❌
 - None currently
 
 ### Deferred 💤
-- Phase 3: Object pooling for projectiles (when needed)
 - Phase 4: JSON-based level system (future enhancement)
 - Phase 5: Polish features (loading screen, advanced debug)
 
@@ -181,6 +217,11 @@
 | 2026-01-21 | EventBus for game state changes | Loose coupling between systems | 5 core events: coin, damage, enemy, level, game | ✅ Decided |
 | 2026-01-21 | 3-slot save system with getState/setState | User-friendly multiple saves | SaveGameManager slot-based API | ✅ Decided |
 | 2026-01-21 | Collision velocity check >= 0 not > 0 | Prevents oscillation when standing still | Fixed player bouncing bug | ✅ Decided |
+| 2026-01-22 | ~~Projectiles pass through platforms~~ | ~~Allows shooting across gaps and over obstacles~~ | ~~Disabled projectile-platform collisions~~ | ❌ Reverted |
+| 2026-01-22 | Projectiles stop at platforms | More realistic physics, prevents spam | Projectiles destroyed on platform hit | ✅ Decided |
+| 2026-01-22 | Enemies don't collide with each other | Prevents AI from getting stuck on patrol | Disabled enemy-enemy collisions | ✅ Decided |
+| 2026-01-22 | Object pooling for projectiles | Reduce GC pressure from constant create/destroy | Reuse projectile instances via pool | ✅ Decided |
+| 2026-01-22 | Pool size 20 initial, 50 max | Balance memory vs pool exhaustion | Enough for most gameplay without waste | ✅ Decided |
 
 ## Deviations from Original Plan
 
@@ -191,6 +232,7 @@
 | 2026-01-21 | Changed to single branch strategy | Originally planned 5 separate branches, worked in single branch instead | More efficient for incremental changes, easier to test | Session 3 decision |
 | 2026-01-21 | InputHandler DID need upgrade | Session 2 decided to keep simple, Session 3 found pressed/held/released critical | Jump/shoot needed pressed, movement needed held | Session 3 revision |
 | 2026-01-21 | Enemy/Projectile need custom draw() | Sprite component only renders images, not colors | Entities with color property need override | Session 3 discovery |
+| 2026-01-22 | Implement Phase 3 now instead of deferring | Projectile freeze bug needed fix, pooling was good time | Combined bug fix with performance improvement | Session 4 decision |
 
 ## Critical Issues Found
 
@@ -202,7 +244,11 @@
 | Menu using old API | Menu.js still using inputHandler.keys.has() | Navigation not working | ✅ Fixed | Updated to isKeyPressed() throughout (Session 3) |
 | SaveGameManager API mismatch | Calling save(key, data) but old API was save(data) | Save/load broken | ✅ Fixed | Rewrote for slot-based system (Session 3) |
 | Input cleared too early | inputHandler.update() at start of frame cleared before entities read | Jump/shoot not working | ✅ Fixed | Moved update() to end of frame (Session 3) |
-| Enemies invisible | Enemy and Projectile had no draw() method | Entities rendered but not visible | ✅ Fixed | Added custom draw() methods for color rendering (Session 3) |
+| Enemies invisible | Enemy and Projectile had no draw() method | Entities rendered but not visible | ✅ Fixed | Added custom draw() methods for color rendering (Session 3
+| Projectiles freezing | Projectiles marked for deletion on platform collision | Projectiles fly short distance then stop | ✅ Fixed | Re-enabled platform collision (projectiles should stop at walls) (Session 4) |
+| Projectile visual freeze | Projectiles appear frozen at 800px until enemy hit | reset() called on release cleared velocity while still drawing | ✅ Fixed | Move reset() to acquire() instead of release() (Session 4) |
+| Projectiles not removed | Projectiles marked for deletion remain visible at max distance | No early return in update/draw when markedForDeletion | ✅ Fixed | Added early returns in update() and draw() methods (Session 4) |
+| Enemies stuck on each other | Enemy-enemy collisions cause AI to stop patrolling | Enemies clump together and freeze | ✅ Fixed | Disabled enemy-enemy collisions (Session 4) |) |
 | Player bouncing | Collision velocity check > 0 didn't catch velocity = 0 | Player oscillating on platforms | ✅ Fixed | Changed to >= 0 in collision checks (Session 3) |
 
 ## Phase 2 Refactoring Tasks

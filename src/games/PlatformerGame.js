@@ -7,6 +7,7 @@ import MainMenu from '../menus/MainMenu.js'
 import SaveGameManager from '../systems/SaveGameManager.js'
 import CollisionManager from '../systems/CollisionManager.js'
 import ResourceManager from '../systems/ResourceManager.js'
+import ObjectPool from '../systems/ObjectPool.js'
 
 /**
  * PlatformerGame - En konkret implementation av GameBase för plattformsspel
@@ -49,6 +50,13 @@ export default class PlatformerGame extends GameBase {
         this.saveManager = new SaveGameManager('platformer-save')
         this.resources = new ResourceManager()
         this.collisionManager = new CollisionManager(this)
+        
+        // Object pooling for projectiles
+        this.projectilePool = new ObjectPool(
+            () => new Projectile(this, 0, 0, 1),
+            20,  // Initial size
+            50   // Max size
+        )
         
         // Setup event listeners
         this.setupEventListeners()
@@ -132,8 +140,9 @@ export default class PlatformerGame extends GameBase {
             50, 50, 'green'
         )
         
-        // Återställ projektiler
+        // Reset projectiles and pool
         this.projectiles = []
+        this.projectilePool.releaseAll()
         
         // Set camera to follow player
         this.camera.position.set(0, 0)
@@ -157,8 +166,17 @@ export default class PlatformerGame extends GameBase {
     }
     
     addProjectile(x, y, directionX) {
-        const projectile = new Projectile(this, x, y, directionX)
-        this.projectiles.push(projectile)
+        // Try to get from pool
+        const projectile = this.projectilePool.acquire()
+        
+        if (projectile) {
+            // Initialize with new position and direction
+            projectile.init(x, y, directionX)
+            this.projectiles.push(projectile)
+            console.log(`[Game] Projectile spawned at (${x}, ${y}). Total active: ${this.projectiles.length}`)
+        } else {
+            console.warn('Projectile pool exhausted - increase maxSize')
+        }
     }
     
     restart() {
@@ -346,18 +364,31 @@ export default class PlatformerGame extends GameBase {
         this.backgroundObjects.forEach(obj => obj.update(deltaTime))
         
         // Level entities
-        this.platforms.forEach(p => p.update(deltaTime))
-        this.coins.forEach(c => c.update(deltaTime))
-        this.enemies.forEach(e => e.update(deltaTime))
-        this.projectiles.forEach(p => p.update(deltaTime))
+        this.platforms.forEach(platform => platform.update(deltaTime))
+        this.coins.forEach(coin => coin.update(deltaTime))
+        this.enemies.forEach(enemy => enemy.update(deltaTime))
+        this.projectiles.forEach(projectile => projectile.update(deltaTime))
         
         // Player
         this.player.update(deltaTime)
         
         // Remove deleted entities
-        this.coins = this.coins.filter(c => !c.markedForDeletion)
-        this.enemies = this.enemies.filter(e => !e.markedForDeletion)
-        this.projectiles = this.projectiles.filter(p => !p.markedForDeletion)
+        this.coins = this.coins.filter(coin => !coin.markedForDeletion)
+        this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion)
+        
+        // Return projectiles to pool before removing
+        const projectilesToRemove = []
+        this.projectiles.forEach(projectile => {
+            if (projectile.markedForDeletion) {
+                projectilesToRemove.push(projectile)
+                this.projectilePool.release(projectile)
+            }
+        })
+        this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion)
+        
+        if (projectilesToRemove.length > 0) {
+            console.log(`Removed ${projectilesToRemove.length} projectiles. Active: ${this.projectiles.length}, Pool stats:`, this.projectilePool.getStats())
+        }
         
         // World bounds for player
         this.player.x = Math.max(0, Math.min(this.player.x, this.worldWidth - this.player.width))
